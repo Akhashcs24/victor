@@ -11,7 +11,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
   const [config, setConfig] = useState<AuthConfig>({
     appId: 'MSEL25Z2K9-100',
     secret: '0O9FRN8DY0',
-    redirectUri: window.location.origin
+    redirectUri: 'https://trade.fyers.in/api-login/redirect-uri/index.html'
   });
   const [authCode, setAuthCode] = useState(() => {
     // Auto-extract auth code from URL if present
@@ -22,37 +22,16 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
 
-  // Check if auth code was auto-extracted from URL
+  // Check if auth code was auto-extracted from URL (keep for backward compatibility)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('auth_code')) {
-      setMessage({ type: 'success', text: 'Auth code detected! Validating automatically...' });
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      // Auto-validate the auth code
       const code = urlParams.get('auth_code');
       if (code) {
         setAuthCode(code);
-        // Auto-validate after a short delay
-        setTimeout(async () => {
-          if (code) {
-            setIsLoading(true);
-            try {
-              const result = await AuthService.validateAuthCode(code, config);
-              if (result.success) {
-                setMessage({ type: 'success', text: 'Authentication successful!' });
-                onAuthSuccess();
-              } else {
-                setMessage({ type: 'error', text: result.message });
-              }
-            } catch (error) {
-              setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        }, 1000);
+        setMessage({ type: 'success', text: 'Auth code detected from URL! Click "Validate Auth Code" to continue.' });
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
   }, []);
@@ -123,32 +102,18 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
       const checkClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkClosed);
-          // Check if auth code was set
-          const urlParams = new URLSearchParams(window.location.search);
-          const code = urlParams.get('auth_code');
-          if (code && code !== authCode) {
-            setAuthCode(code);
-            setMessage({ type: 'success', text: 'Auth code received! Validating...' });
-            // Clean up URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-            // Auto-validate
-            setTimeout(async () => {
-              setIsLoading(true);
-              try {
-                const result = await AuthService.validateAuthCode(code, config);
-                if (result.success) {
-                  setMessage({ type: 'success', text: 'Authentication successful!' });
-                  onAuthSuccess();
-                } else {
-                  setMessage({ type: 'error', text: result.message });
-                }
-              } catch (error) {
-                setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
-              } finally {
-                setIsLoading(false);
-              }
-            }, 500);
+          setMessage({ type: 'success', text: 'Popup closed. Please paste the auth code from the Fyers page.' });
+        }
+        
+        // Try to check if popup has navigated to the redirect URL
+        try {
+          const popupUrl = popup.location.href;
+          if (popupUrl && popupUrl.includes('trade.fyers.in/api-login/redirect-uri')) {
+            // The popup has reached the auth code page
+            setMessage({ type: 'success', text: 'Authentication completed! Copy the auth code from the popup and paste it below.' });
           }
+        } catch (e) {
+          // Cross-origin access blocked - this is expected
         }
       }, 1000);
 
@@ -302,8 +267,8 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
             <li>1. Enter your Fyers API credentials</li>
             <li>2. Click "Login with Fyers" to open authentication popup</li>
             <li>3. Complete login in the popup window</li>
-            <li>4. Popup will close automatically after successful login</li>
-            <li>5. Authentication will be validated automatically</li>
+            <li>4. Copy the auth code from the Fyers redirect page</li>
+            <li>5. Paste the code below and click "Validate Auth Code"</li>
           </ol>
         </div>
       </div>
