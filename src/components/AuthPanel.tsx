@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Key, User, Globe, X } from 'lucide-react';
+import { Key, User, Globe } from 'lucide-react';
 import { AuthService } from '../services/authService';
 import { AuthConfig } from '../types';
 
@@ -20,8 +20,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authUrl, setAuthUrl] = useState('');
+
 
   // Check if auth code was auto-extracted from URL
   useEffect(() => {
@@ -30,8 +29,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
       setMessage({ type: 'success', text: 'Auth code detected! Validating automatically...' });
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
-      // Close modal if it was open
-      setShowAuthModal(false);
+      
       // Auto-validate the auth code
       const code = urlParams.get('auth_code');
       if (code) {
@@ -69,7 +67,6 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
       
       if (event.data && event.data.auth_code) {
         setAuthCode(event.data.auth_code);
-        setShowAuthModal(false);
         setMessage({ type: 'success', text: 'Auth code received! Validating...' });
         // Auto-validate
         setTimeout(async () => {
@@ -107,9 +104,62 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
 
     try {
       const url = AuthService.generateAuthUrl(config);
-      setAuthUrl(url);
-      setShowAuthModal(true);
-      setMessage({ type: 'success', text: 'Login modal opened. Please complete authentication.' });
+      
+      // Open popup window for authentication
+      const popup = window.open(
+        url,
+        'fyersAuth',
+        'width=600,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,directories=no,status=no'
+      );
+
+      if (!popup) {
+        setMessage({ type: 'error', text: 'Popup blocked. Please allow popups for this site.' });
+        return;
+      }
+
+      setMessage({ type: 'success', text: 'Authentication popup opened. Complete login to continue.' });
+
+      // Monitor popup for completion
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          // Check if auth code was set
+          const urlParams = new URLSearchParams(window.location.search);
+          const code = urlParams.get('auth_code');
+          if (code && code !== authCode) {
+            setAuthCode(code);
+            setMessage({ type: 'success', text: 'Auth code received! Validating...' });
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Auto-validate
+            setTimeout(async () => {
+              setIsLoading(true);
+              try {
+                const result = await AuthService.validateAuthCode(code, config);
+                if (result.success) {
+                  setMessage({ type: 'success', text: 'Authentication successful!' });
+                  onAuthSuccess();
+                } else {
+                  setMessage({ type: 'error', text: result.message });
+                }
+              } catch (error) {
+                setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+              } finally {
+                setIsLoading(false);
+              }
+            }, 500);
+          }
+        }
+      }, 1000);
+
+      // Cleanup after 5 minutes
+      setTimeout(() => {
+        clearInterval(checkClosed);
+        if (!popup.closed) {
+          popup.close();
+        }
+      }, 5 * 60 * 1000);
+
     } catch (error) {
       setMessage({ type: 'error', text: `Failed to generate auth URL: ${error instanceof Error ? error.message : 'Unknown error'}` });
     }
@@ -250,48 +300,15 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
           <h3 className="text-sm font-medium text-gray-900 mb-2">Instructions:</h3>
           <ol className="text-sm text-gray-600 space-y-1">
             <li>1. Enter your Fyers API credentials</li>
-            <li>2. Click "Login with Fyers" to open authentication modal</li>
-            <li>3. Complete login in the modal window</li>
-            <li>4. Modal will close automatically after successful login</li>
+            <li>2. Click "Login with Fyers" to open authentication popup</li>
+            <li>3. Complete login in the popup window</li>
+            <li>4. Popup will close automatically after successful login</li>
             <li>5. Authentication will be validated automatically</li>
           </ol>
         </div>
       </div>
 
-      {/* Authentication Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-5/6 relative">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Fyers Authentication</h3>
-              <button
-                onClick={() => setShowAuthModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            {/* Modal Content */}
-            <div className="p-4 h-full">
-              <iframe
-                src={authUrl}
-                className="w-full h-full border-0 rounded"
-                title="Fyers Authentication"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation"
-              />
-            </div>
-            
-            {/* Modal Footer */}
-            <div className="p-4 border-t bg-gray-50 rounded-b-lg">
-              <p className="text-sm text-gray-600">
-                🔐 Complete your login in the frame above. The modal will close automatically after successful authentication.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }; 
