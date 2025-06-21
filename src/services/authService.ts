@@ -97,9 +97,9 @@ export class AuthService {
       };
       
       console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
-      console.log('�� Making request to: /api/fyers/api/v3/validate-authcode');
+      console.log('🔌 Making request to: /api/v3/validate-authcode');
       
-      const response = await fetch('/api/fyers/api/v3/validate-authcode', {
+      const response = await fetch('/api/v3/validate-authcode', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ export class AuthService {
       console.log('🆔 App ID:', this.appId);
       console.log('🔑 Access Token:', this.accessToken.substring(0, 20) + '...');
       
-      const response = await fetch('/api/fyers/api/v3/profile', {
+      const response = await fetch('/api/v3/profile', {
         method: 'GET',
         headers: {
           'Authorization': `${this.appId}:${this.accessToken}`,
@@ -218,7 +218,7 @@ export class AuthService {
       console.log('🆔 App ID:', this.appId);
       console.log('🔑 Access Token:', this.accessToken.substring(0, 20) + '...');
       
-      const response = await fetch('/api/fyers/api/v3/profile', {
+      const response = await fetch('/api/v3/profile', {
         method: 'GET',
         headers: {
           'Authorization': `${this.appId}:${this.accessToken}`,
@@ -278,7 +278,7 @@ export class AuthService {
     }
 
     try {
-      const response = await fetch('/api/fyers/api/v3/refresh-token', {
+      const response = await fetch('/api/v3/refresh-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

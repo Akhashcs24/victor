@@ -1,10 +1,12 @@
 // Simple test to verify proxy configuration
+import { MarketDataService } from "./services/marketDataService";
+
 async function testProxy() {
   try {
     console.log('🧪 Testing proxy configuration...');
     
     // Test the proxy endpoint
-    const response = await fetch('/api/fyers/data/quotes?symbols=NSE:NIFTY50-INDEX', {
+    const response = await fetch('/api/data/quotes?symbols=NSE:NIFTY50-INDEX', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'

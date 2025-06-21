@@ -1,9 +1,9 @@
 {
   "functions": {
-    "api/fyers/api/v3/**/*.js": {
+    "api/v3/**/*.js": {
       "runtime": "@vercel/node"
     },
-    "api/fyers/data/**/*.js": {
+    "api/data/**/*.js": {
       "runtime": "@vercel/node"
     }
   },
