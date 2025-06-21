@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Key, User, Globe } from 'lucide-react';
+import { ExternalLink, Key, User, Globe, X } from 'lucide-react';
 import { AuthService } from '../services/authService';
 import { AuthConfig } from '../types';
 
@@ -20,15 +20,79 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authUrl, setAuthUrl] = useState('');
 
   // Check if auth code was auto-extracted from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('auth_code')) {
-      setMessage({ type: 'success', text: 'Auth code detected from URL! Click "Validate Auth Code" to continue.' });
+      setMessage({ type: 'success', text: 'Auth code detected! Validating automatically...' });
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      // Close modal if it was open
+      setShowAuthModal(false);
+      // Auto-validate the auth code
+      const code = urlParams.get('auth_code');
+      if (code) {
+        setAuthCode(code);
+        // Auto-validate after a short delay
+        setTimeout(async () => {
+          if (code) {
+            setIsLoading(true);
+            try {
+              const result = await AuthService.validateAuthCode(code, config);
+              if (result.success) {
+                setMessage({ type: 'success', text: 'Authentication successful!' });
+                onAuthSuccess();
+              } else {
+                setMessage({ type: 'error', text: result.message });
+              }
+            } catch (error) {
+              setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }, 1000);
+      }
     }
+  }, []);
+
+  // Listen for messages from the iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Only accept messages from Fyers domain
+      if (event.origin !== 'https://api-t1.fyers.in' && event.origin !== 'https://api.fyers.in') {
+        return;
+      }
+      
+      if (event.data && event.data.auth_code) {
+        setAuthCode(event.data.auth_code);
+        setShowAuthModal(false);
+        setMessage({ type: 'success', text: 'Auth code received! Validating...' });
+        // Auto-validate
+        setTimeout(async () => {
+          setIsLoading(true);
+          try {
+            const result = await AuthService.validateAuthCode(event.data.auth_code, config);
+            if (result.success) {
+              setMessage({ type: 'success', text: 'Authentication successful!' });
+              onAuthSuccess();
+            } else {
+              setMessage({ type: 'error', text: result.message });
+            }
+          } catch (error) {
+            setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+          } finally {
+            setIsLoading(false);
+          }
+        }, 500);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const handleInputChange = (field: keyof AuthConfig, value: string) => {
@@ -42,9 +106,10 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
     }
 
     try {
-      const authUrl = AuthService.generateAuthUrl(config);
-      window.open(authUrl, '_blank');
-      setMessage({ type: 'success', text: 'Auth URL opened in new tab. Please login and copy the auth code.' });
+      const url = AuthService.generateAuthUrl(config);
+      setAuthUrl(url);
+      setShowAuthModal(true);
+      setMessage({ type: 'success', text: 'Login modal opened. Please complete authentication.' });
     } catch (error) {
       setMessage({ type: 'error', text: `Failed to generate auth URL: ${error instanceof Error ? error.message : 'Unknown error'}` });
     }
@@ -143,8 +208,8 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
             className="btn-primary w-full flex items-center justify-center"
             disabled={!config.appId || !config.secret || !config.redirectUri}
           >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Generate Auth URL
+            <Key className="w-4 h-4 mr-2" />
+            Login with Fyers
           </button>
 
           {/* Auth Code Input */}
@@ -185,13 +250,48 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
           <h3 className="text-sm font-medium text-gray-900 mb-2">Instructions:</h3>
           <ol className="text-sm text-gray-600 space-y-1">
             <li>1. Enter your Fyers API credentials</li>
-            <li>2. Click "Generate Auth URL" to open login page</li>
-            <li>3. Login with your Fyers credentials</li>
-            <li>4. Copy the auth code from the redirect URL</li>
-            <li>5. Paste the code and click "Validate Auth Code"</li>
+            <li>2. Click "Login with Fyers" to open authentication modal</li>
+            <li>3. Complete login in the modal window</li>
+            <li>4. Modal will close automatically after successful login</li>
+            <li>5. Authentication will be validated automatically</li>
           </ol>
         </div>
       </div>
+
+      {/* Authentication Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-5/6 relative">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Fyers Authentication</h3>
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-4 h-full">
+              <iframe
+                src={authUrl}
+                className="w-full h-full border-0 rounded"
+                title="Fyers Authentication"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation"
+              />
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="p-4 border-t bg-gray-50 rounded-b-lg">
+              <p className="text-sm text-gray-600">
+                🔐 Complete your login in the frame above. The modal will close automatically after successful authentication.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }; 
