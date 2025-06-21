@@ -355,7 +355,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
           </button>
         </div>
 
-                  <div className="mt-6 p-4 bg-slate-50 rounded-lg">
+        <div className="mt-6 p-4 bg-slate-50 rounded-lg">
           <h3 className="text-sm font-medium text-gray-900 mb-2">Instructions:</h3>
           <ol className="text-sm text-gray-600 space-y-1">
             <li>1. Enter your Fyers API credentials</li>
@@ -366,8 +366,6 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
           </ol>
         </div>
       </div>
-
-
     </div>
   );
 }; 

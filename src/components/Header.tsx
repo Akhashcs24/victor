@@ -132,58 +132,110 @@ export const Header: React.FC<HeaderProps> = ({ status, onStatusUpdate, onLogout
         <div className="flex items-center justify-between h-16">
           {/* Left Side: Logo */}
           <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-bold text-yellow-800 tracking-wider flex items-center gap-2" style={{ fontFamily: "'Cherry Bomb One', cursive" }}>
-              <Trophy className="w-8 h-8 text-yellow-500" />
-              Victor
+            <h1 className="text-2xl md:text-3xl font-bold text-yellow-800 tracking-wider flex items-center gap-2" style={{ fontFamily: "'Cherry Bomb One', cursive" }}>
+              <Trophy className="w-6 h-6 md:w-8 md:h-8 text-yellow-500" />
+              <span className="hidden sm:inline">Victor</span>
+              <span className="sm:hidden">V</span>
             </h1>
           </div>
-          {/* Right Side: Badges, Profile, Actions */}
-          <div className="flex items-center space-x-4">
+
+          {/* Mobile Layout */}
+          <div className="flex md:hidden items-center space-x-2">
+            {/* Most Critical Status on Mobile */}
+            <div className="flex items-center space-x-1">
+              {/* Auth Status - Most Important */}
+              <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${status.tokenValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}> 
+                <User className="w-3 h-3" />
+                <span className="hidden xs:inline">{status.tokenValid ? 'Auth' : 'No Auth'}</span>
+              </span>
+              
+              {/* Market Status */}
+              <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getMarketStatusColor().replace('status-', 'bg-').replace('success', 'green-100 text-green-800').replace('warning', 'yellow-100 text-yellow-800').replace('danger', 'red-100 text-red-800')}`}> 
+                <Globe className="w-3 h-3" />
+                <span className="hidden xs:inline">{marketStatus.status}</span>
+              </span>
+              
+              {/* Monitoring Status */}
+              {status.monitoringStatus === 'ON' && (
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex items-center gap-1"> 
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span className="hidden xs:inline">ON</span>
+                </span>
+              )}
+            </div>
+
+            {/* Profile & Logout */}
+            <div className="flex items-center space-x-2">
+              <div className="text-right">
+                <span className="text-xs font-medium text-slate-900 block truncate max-w-20">
+                  {status.profileName?.split(' ')[0] || 'User'}
+                </span>
+              </div>
+              <button
+                onClick={onLogout}
+                className="p-1.5 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               {/* Auth Status */}
               <span className={`status-indicator ${status.tokenValid ? 'status-success' : 'status-danger'}`}> 
                 <User className="w-4 h-4 mr-1" />
                 {status.tokenValid ? 'Authenticated' : 'Not Authenticated'}
               </span>
+              
               {/* Monitoring Status */}
               <span className={`status-indicator ${status.monitoringStatus === 'ON' ? 'status-success' : 'status-warning'}`}> 
                 <Zap className="w-4 h-4 mr-1" />
                 {status.monitoringStatus === 'ON' ? 'Monitoring' : 'Not Monitoring'}
               </span>
+              
               {/* Trade Engine Status */}
               <span className={`status-indicator status-info`}> 
                 <Settings className="w-4 h-4 mr-1" />
                 {status.tradeEngineStatus}
               </span>
+              
               {/* Server Status */}
               <span className={`status-indicator ${status.tokenValid ? 'status-success' : 'status-danger'}`}> 
                 <Server className="w-4 h-4 mr-1" />
                 Server: {status.tokenValid ? 'Connected' : 'Stopped'}
               </span>
+              
               {/* Enhanced Market Status */}
               <span className={`status-indicator ${getMarketStatusColor()}`}> 
                 <Globe className="w-4 h-4 mr-1" />
                 {getMarketStatusText()}
               </span>
+              
               {/* API Health */}
               <span className={`status-indicator ${status.apiHealth === 'HEALTHY' ? 'status-success' : status.apiHealth === 'DEGRADED' ? 'status-warning' : 'status-danger'}`}> 
                 <Wifi className="w-4 h-4 mr-1" />
                 {status.apiHealth}
               </span>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-sm font-semibold text-slate-900 flex items-center gap-1">
-                <User className="w-4 h-4" />
-                {status.profileName}
-              </span>
+            
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <span className="text-sm font-semibold text-slate-900 flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  {status.profileName}
+                </span>
+              </div>
+              <button
+                onClick={onLogout}
+                className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={onLogout}
-              className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>

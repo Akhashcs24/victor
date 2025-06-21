@@ -465,7 +465,7 @@ function App() {
 
   return (
           <div className="min-h-screen bg-slate-50">
-              <Header status={headerStatus} onStatusUpdate={handleStatusUpdate} onLogout={handleLogout} />
+              {isAuthenticated && <Header status={headerStatus} onStatusUpdate={handleStatusUpdate} onLogout={handleLogout} />}
       
       {/* Error Display */}
       {error && (
@@ -512,7 +512,7 @@ function App() {
         </div>
       )}
 
-      <main className="container mx-auto px-4 py-8">
+      <main className={`${isAuthenticated ? 'container mx-auto px-4 py-8' : ''}`}>
         {!isAuthenticated ? (
           <AuthPanel onAuthSuccess={handleAuthSuccess} />
         ) : (
@@ -949,18 +949,20 @@ function App() {
       
       {/* All Logs Page Modal/Overlay */}
       {showAllLogs && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-slate-900">All Trade Logs</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full h-full sm:rounded-2xl sm:shadow-2xl sm:w-full sm:max-w-7xl sm:max-h-[90vh] sm:h-auto overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between">
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900">All Trade Logs</h2>
               <button
                 onClick={() => setShowAllLogs(false)}
-                className="btn-secondary"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                Close
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
-            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="overflow-y-auto h-full sm:max-h-[calc(90vh-80px)]">
               <AllLogsPage onClose={() => setShowAllLogs(false)} />
             </div>
           </div>
