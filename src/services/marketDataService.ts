@@ -10,9 +10,7 @@ export interface CandleData {
 }
 
 export class MarketDataService {
-  private static readonly BASE_URL = '/api/market';
-  private static readonly RETRY_LIMIT = 3;
-  private static readonly RETRY_DELAY = 1000; // ms
+  private static readonly BASE_URL = '/api/fyers/data';
 
   static async getHistoricalData(
     symbol: string,

@@ -1,5 +1,4 @@
 import { AuthService } from './authService';
-// import { FyersMarketStatus } from '../types/fyers';
 
 export interface LiveMarketData {
   symbol: string;
@@ -15,7 +14,7 @@ export interface LiveMarketData {
 }
 
 export class LiveMarketDataService {
-  private baseUrl = '/api/market';
+  private baseUrl = '/api/fyers/data';
 
   /**
    * Fetch market data for a given symbol

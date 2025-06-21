@@ -1,17 +1,7 @@
 {
-  "builds": [
-    { "src": "api/market/quotes.js", "use": "@vercel/node" },
-    { "src": "api/market/history.js", "use": "@vercel/node" },
-    { "src": "api/market/market-status.js", "use": "@vercel/node" },
-    { "src": "api/market/test.js", "use": "@vercel/node" },
-    { "src": "api/v3/profile.js", "use": "@vercel/node" },
-    { "src": "api/v3/refresh-token.js", "use": "@vercel/node" },
-    { "src": "api/v3/validate-authcode.js", "use": "@vercel/node" },
-    { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
-  ],
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -21,8 +11,7 @@
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-Requested-With" },
-        { "key": "Access-Control-Allow-Credentials", "value": "true" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
     }
   ]

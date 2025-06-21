@@ -232,13 +232,9 @@ function App() {
     console.log(`📊 Market data for ${indexSymbol}:`, marketDataForIndex);
     
     if (!marketDataForIndex || !marketDataForIndex.open) {
-      console.log(`⚠️ No market data available for ${index} - dropdowns will remain empty`);
-      setCeStrikeSymbols([]);
-      setPeStrikeSymbols([]);
+      console.log(`No market data available for ${index}`);
       return;
     }
-
-    console.log(`✅ Using market open price: ${marketDataForIndex.open} for ${index}`);
 
     // Generate strike symbols
     const result = FixedSymbolService.fixedSymbolService (
@@ -249,10 +245,9 @@ function App() {
     setCeStrikeSymbols(result.ce);
     setPeStrikeSymbols(result.pe);
     
-    console.log(`✅ Generated ${result.ce.length} CE and ${result.pe.length} PE strike symbols for ${index}`);
-    console.log(`📊 ATM Strike: ${result.atmStrike}, Open Price: ${result.openPrice}`);
-    console.log(`🔍 Sample CE symbols:`, result.ce.slice(0, 3).map(s => s.symbol));
-    console.log(`🔍 Sample PE symbols:`, result.pe.slice(0, 3).map(s => s.symbol));
+    console.log(`Generated ${result.ce.length} CE and ${result.pe.length} PE strike symbols for ${index}`);
+    console.log(`Sample CE symbols:`, result.ce.slice(0, 3).map(s => s.symbol));
+    console.log(`Sample PE symbols:`, result.pe.slice(0, 3).map(s => s.symbol));
   };
 
   // Get index symbol for market data lookup
