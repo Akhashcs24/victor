@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Key, User, Globe } from 'lucide-react';
+import { Key, User, Globe, Clipboard } from 'lucide-react';
 import { AuthService } from '../services/authService';
 import { AuthConfig } from '../types';
 
@@ -108,10 +108,16 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
         // Try to extract auth code from popup URL
         try {
           const popupUrl = popup.location.href;
+          console.log('🔍 Checking popup URL:', popupUrl);
+          
           if (popupUrl && popupUrl.includes('trade.fyers.in/api-login/redirect-uri')) {
+            console.log('✅ Popup reached redirect page');
+            
             // Extract auth code from URL
             const urlParams = new URLSearchParams(new URL(popupUrl).search);
             const authCodeFromUrl = urlParams.get('auth_code');
+            
+            console.log('🔑 Auth code from URL:', authCodeFromUrl?.substring(0, 20) + '...');
             
             if (authCodeFromUrl && authCodeFromUrl !== authCode) {
               setAuthCode(authCodeFromUrl);
@@ -139,7 +145,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
             }
           }
         } catch (e) {
-          // Cross-origin access blocked - this is expected, but we can still try other methods
+          console.log('❌ Cross-origin access blocked for URL detection:', e.message);
         }
         
         // Alternative: Try to read from popup document (if same-origin)
@@ -179,7 +185,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
         } catch (e) {
           // Cross-origin or other access issues
         }
-      }, 1000);
+      }, 500); // Check more frequently (every 500ms instead of 1000ms)
 
       // Cleanup after 5 minutes
       setTimeout(() => {
@@ -216,6 +222,20 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
       setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePasteAuthCode = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && text.trim()) {
+        setAuthCode(text.trim());
+        setMessage({ type: 'success', text: 'Auth code pasted successfully!' });
+      } else {
+        setMessage({ type: 'error', text: 'No text found in clipboard' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to read from clipboard. Please paste manually.' });
     }
   };
 
@@ -296,13 +316,23 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Auth Code
             </label>
-            <input
-              type="text"
-              value={authCode}
-              onChange={(e) => setAuthCode(e.target.value)}
-              className="input-field"
-              placeholder="Paste the auth code from the redirect URL"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={authCode}
+                onChange={(e) => setAuthCode(e.target.value)}
+                className="input-field pr-10"
+                placeholder="Paste the auth code from the redirect URL"
+              />
+              <button
+                type="button"
+                onClick={handlePasteAuthCode}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Paste from clipboard"
+              >
+                <Clipboard className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Validate Auth Code Button */}
@@ -332,7 +362,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
             <li>2. Click "Login with Fyers" to open authentication popup</li>
             <li>3. Complete login in the popup window</li>
             <li>4. Auth code will be detected automatically from popup</li>
-            <li>5. Authentication will be validated automatically</li>
+            <li>5. If auto-detection fails, use the paste button 📋 to paste manually</li>
           </ol>
         </div>
       </div>
