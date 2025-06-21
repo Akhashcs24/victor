@@ -231,23 +231,36 @@ function App() {
     console.log(`📊 Available market data keys:`, Array.from(marketData.keys()));
     console.log(`📊 Market data for ${indexSymbol}:`, marketDataForIndex);
     
-    if (!marketDataForIndex || !marketDataForIndex.open) {
-      console.log(`No market data available for ${index}`);
-      return;
+    // Use market data if available, otherwise use fallback prices
+    let openPrice = marketDataForIndex?.open;
+    
+    if (!openPrice || isNaN(openPrice)) {
+      // Fallback prices for when market data is not available (useful for Vercel deployment)
+      const fallbackPrices = {
+        'NIFTY': 24800,
+        'BANKNIFTY': 55600,
+        'SENSEX': 81400
+      };
+      
+      openPrice = fallbackPrices[index as keyof typeof fallbackPrices] || 25000;
+      console.log(`⚠️ No market data available for ${index}, using fallback price: ${openPrice}`);
+    } else {
+      console.log(`✅ Using market open price: ${openPrice} for ${index}`);
     }
 
-    // Generate strike symbols
+    // Generate strike symbols (this will always work now)
     const result = FixedSymbolService.fixedSymbolService (
       index,
-      marketDataForIndex.open
+      openPrice
     );
 
     setCeStrikeSymbols(result.ce);
     setPeStrikeSymbols(result.pe);
     
-    console.log(`Generated ${result.ce.length} CE and ${result.pe.length} PE strike symbols for ${index}`);
-    console.log(`Sample CE symbols:`, result.ce.slice(0, 3).map(s => s.symbol));
-    console.log(`Sample PE symbols:`, result.pe.slice(0, 3).map(s => s.symbol));
+    console.log(`✅ Generated ${result.ce.length} CE and ${result.pe.length} PE strike symbols for ${index}`);
+    console.log(`📊 ATM Strike: ${result.atmStrike}, Open Price: ${result.openPrice}`);
+    console.log(`🔍 Sample CE symbols:`, result.ce.slice(0, 3).map(s => s.symbol));
+    console.log(`🔍 Sample PE symbols:`, result.pe.slice(0, 3).map(s => s.symbol));
   };
 
   // Get index symbol for market data lookup
@@ -296,12 +309,19 @@ function App() {
     };
   }, [isAuthenticated]);
 
-  // Generate strike symbols when market data changes
+  // Generate strike symbols when market data changes or on initial load
   useEffect(() => {
-    if (marketData.size > 0) {
+    // Always generate symbols, even if market data is not available (will use fallback prices)
+    fixedSymbolService (headerStatus.selectedIndex);
+  }, [marketData, headerStatus.selectedIndex]);
+
+  // Also generate symbols immediately when the component mounts and user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('🔄 User authenticated, generating initial strike symbols...');
       fixedSymbolService (headerStatus.selectedIndex);
     }
-  }, [marketData, headerStatus.selectedIndex]);
+  }, [isAuthenticated]);
 
   // Trading dashboard handlers
   const handleContractInputChange = (field: keyof ContractInputs, value: any) => {
