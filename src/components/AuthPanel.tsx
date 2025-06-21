@@ -98,22 +98,86 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
 
       setMessage({ type: 'success', text: 'Authentication popup opened. Complete login to continue.' });
 
-      // Monitor popup for completion
+      // Monitor popup for completion and auto-extract auth code
       const checkClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkClosed);
-          setMessage({ type: 'success', text: 'Popup closed. Please paste the auth code from the Fyers page.' });
+          setMessage({ type: 'success', text: 'Popup closed. Please paste the auth code if not automatically detected.' });
         }
         
-        // Try to check if popup has navigated to the redirect URL
+        // Try to extract auth code from popup URL
         try {
           const popupUrl = popup.location.href;
           if (popupUrl && popupUrl.includes('trade.fyers.in/api-login/redirect-uri')) {
-            // The popup has reached the auth code page
-            setMessage({ type: 'success', text: 'Authentication completed! Copy the auth code from the popup and paste it below.' });
+            // Extract auth code from URL
+            const urlParams = new URLSearchParams(new URL(popupUrl).search);
+            const authCodeFromUrl = urlParams.get('auth_code');
+            
+            if (authCodeFromUrl && authCodeFromUrl !== authCode) {
+              setAuthCode(authCodeFromUrl);
+              popup.close();
+              clearInterval(checkClosed);
+              setMessage({ type: 'success', text: 'Auth code detected automatically! Validating...' });
+              
+              // Auto-validate the auth code
+              setTimeout(async () => {
+                setIsLoading(true);
+                try {
+                  const result = await AuthService.validateAuthCode(authCodeFromUrl, config);
+                  if (result.success) {
+                    setMessage({ type: 'success', text: 'Authentication successful!' });
+                    onAuthSuccess();
+                  } else {
+                    setMessage({ type: 'error', text: result.message });
+                  }
+                } catch (error) {
+                  setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+                } finally {
+                  setIsLoading(false);
+                }
+              }, 500);
+            }
           }
         } catch (e) {
-          // Cross-origin access blocked - this is expected
+          // Cross-origin access blocked - this is expected, but we can still try other methods
+        }
+        
+        // Alternative: Try to read from popup document (if same-origin)
+        try {
+          if (popup.document && popup.document.body) {
+            const bodyText = popup.document.body.innerText || popup.document.body.textContent;
+            if (bodyText && bodyText.includes('authorization code')) {
+              // Look for the auth code pattern in the page text
+              const authCodeMatch = bodyText.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/);
+              if (authCodeMatch && authCodeMatch[0] !== authCode) {
+                const extractedCode = authCodeMatch[0];
+                setAuthCode(extractedCode);
+                popup.close();
+                clearInterval(checkClosed);
+                setMessage({ type: 'success', text: 'Auth code extracted from page! Validating...' });
+                
+                // Auto-validate
+                setTimeout(async () => {
+                  setIsLoading(true);
+                  try {
+                    const result = await AuthService.validateAuthCode(extractedCode, config);
+                    if (result.success) {
+                      setMessage({ type: 'success', text: 'Authentication successful!' });
+                      onAuthSuccess();
+                    } else {
+                      setMessage({ type: 'error', text: result.message });
+                    }
+                  } catch (error) {
+                    setMessage({ type: 'error', text: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }, 500);
+              }
+            }
+          }
+        } catch (e) {
+          // Cross-origin or other access issues
         }
       }, 1000);
 
@@ -267,8 +331,8 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
             <li>1. Enter your Fyers API credentials</li>
             <li>2. Click "Login with Fyers" to open authentication popup</li>
             <li>3. Complete login in the popup window</li>
-            <li>4. Copy the auth code from the Fyers redirect page</li>
-            <li>5. Paste the code below and click "Validate Auth Code"</li>
+            <li>4. Auth code will be detected automatically from popup</li>
+            <li>5. Authentication will be validated automatically</li>
           </ol>
         </div>
       </div>
