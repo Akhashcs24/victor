@@ -15,7 +15,7 @@ export interface LiveMarketData {
 }
 
 export class LiveMarketDataService {
-  private baseUrl = '/api/data';
+  private baseUrl = '/api/market';
 
   /**
    * Fetch market data for a given symbol
