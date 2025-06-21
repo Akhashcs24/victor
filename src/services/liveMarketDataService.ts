@@ -1,5 +1,5 @@
 import { AuthService } from './authService';
-import { FyersMarketStatus } from '../types/fyers';
+// import { FyersMarketStatus } from '../types/fyers';
 
 export interface LiveMarketData {
   symbol: string;
@@ -16,9 +16,6 @@ export interface LiveMarketData {
 
 export class LiveMarketDataService {
   private baseUrl = '/api/data';
-  private marketStatus: FyersMarketStatus | null = null;
-  private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
    * Fetch market data for a given symbol
