@@ -21,9 +21,15 @@ export default async function handler(req, res) {
     console.log('🔑 Authorization:', authorization ? authorization.substring(0, 30) + '...' : 'MISSING');
     console.log('📊 Symbols:', symbols);
     
+    // If no authorization, return a simple test response
     if (!authorization) {
-      console.log('❌ No authorization header');
-      return res.status(400).json({ error: 'No authorization header' });
+      console.log('ℹ️ No authorization header - returning simple test response');
+      return res.status(200).json({ 
+        test: 'success',
+        message: 'API routing is working correctly!',
+        timestamp: new Date().toISOString(),
+        note: 'Add authorization header and symbols query parameter for full API test'
+      });
     }
     
     if (!symbols) {
