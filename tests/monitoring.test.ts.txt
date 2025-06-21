@@ -1,0 +1,13 @@
+describe("Monitoring Engine", () => {
+  it("starts monitoring on user command", () => {
+    // Button enables strategy logic
+  });
+
+  it("checks LTP against HMA", () => {
+    // Compares 1-min candle close with HMA-55
+  });
+
+  it("triggers trade when crossover happens", () => {
+    // Initiates entry when trigger is hit
+  });
+});

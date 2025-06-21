@@ -1,0 +1,13 @@
+describe("Header Status Indicators", () => {
+  it("shows correct auth and token status", () => {
+    // Displays ✅ for valid token, ❌ if expired
+  });
+
+  it("updates monitoring status", () => {
+    // Status toggles when monitoring starts/stops
+  });
+
+  it("displays last trade time, API health, and selected index", () => {
+    // Header renders dynamic info correctly
+  });
+});

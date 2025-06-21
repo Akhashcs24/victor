@@ -1,0 +1,113 @@
+# Victor: HMA-55 Trading App Requirements (Optimized with Manual Control)
+
+## Overview
+This is a personal-use web+mobile trading app built using Fyers API. The app monitors a single HMA-55 crossover strategy on ATM options of Nifty 50, Bank Nifty, or Sensex. It includes manual intervention points to reduce API load and enhance stability.
+
+---
+
+## 1. Authentication
+- User enters:
+  - App ID
+  - Secret
+  - Redirect URI
+- App generates an Auth Link → opens in a new tab for login
+- User returns and manually enters the Auth Code
+- App exchanges code for access token
+- Header shows Auth Status, Token Validity, and API Health
+
+---
+
+## 2. Manual Data Control
+To avoid hitting Fyers API rate limits:
+- **Contract Selection**:
+  - User manually enters the CE and PE option symbols (e.g., `NSE:NIFTY24500CE`, `NSE:NIFTY24500PE`)
+- **Historical Data**:
+  - User clicks "Fetch HMA Data" button
+  - App fetches last 55 candles of 5-min data and calculates HMA-55
+- **Open Price**:
+  - User manually clicks "Lock Open Price" to fetch and display open prices for all indexes
+  - Calculated ATM is shown but not enforced
+
+---
+
+## 3. UI Layout
+
+### Header (Sticky, Top)
+- ✅ Auth Status
+- ✅ Access Token Valid
+- 📈 Selected Index
+- 🔄 Monitoring ON/OFF
+- 🔐 Open Price Locked
+- ⚙️ Trade Engine: RUNNING / PAUSED / STOPPED
+- 📶 API Health
+- ⏱️ Last Trade Time
+
+### Main Interface
+
+#### A. Index & Mode Selector
+- Dropdown to select: Nifty 50, Bank Nifty, Sensex
+- Toggle: Paper Trade / Live Trade
+
+#### B. Contract Input & HMA Fetch
+- Input fields: CE Symbol, PE Symbol
+- Quantity input for each leg
+- Target/SL inputs (Points or Percentage)
+- Entry method dropdown: Market / Limit
+- Buttons:
+  - "Fetch HMA Data"
+  - "Start Monitoring"
+
+#### C. Strategy Monitoring Cards (2 Cards)
+- One for CE, one for PE
+- Show:
+  - Current LTP
+  - HMA-55 Value
+  - Trigger status
+  - Entry & Exit info
+  - PnL in real-time
+
+#### D. Trade Log Panel (Right Side or Bottom)
+- Scrollable log of trades:
+  - Timestamp
+  - Symbol
+  - Entry/Exit price
+  - SL/Target hit
+  - P/L
+
+---
+
+## 4. Strategy Logic
+- Monitor 1-min candle close LTPs for both CE and PE contracts
+- If 1-min candle closes above the latest 5-min HMA-55 → entry
+- Place entry as Market or Limit order based on user selection
+- SL/Target are tracked by the app, exit by sending a Limit Order
+- App must maintain status and error recovery (retry on fail, alert on expiry)
+
+---
+
+## 5. Technology
+- Tailwind CSS for clean, minimal UI
+- React (Web+Mobile ready)
+- Fyers v3 API integration
+- Cursor-based development
+- Deployment-ready for personal hosting (optional)
+
+---
+
+## 6. Limits and Safety
+- Fyers API: 10/sec, 200/min, 100k/day
+- No automatic scanning or polling unless user clicks an action
+- Monitoring uses 1 API call per minute per contract only after user triggers it
+- System must pause monitoring if token expires
+
+---
+
+## 7. Future Scope
+- Live charts, WebSocket support
+- Automated strike selector based on open price
+- Multi-strategy engine
+
+---
+
+## Test Files
+Refer to `tests/` directory for test coverage that aligns with this spec.
