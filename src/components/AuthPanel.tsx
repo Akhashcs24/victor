@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ExternalLink, Key, User, Globe } from 'lucide-react';
 import { AuthService } from '../services/authService';
 import { AuthConfig } from '../types';
@@ -13,9 +13,23 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
     secret: '0O9FRN8DY0',
     redirectUri: window.location.origin
   });
-  const [authCode, setAuthCode] = useState('');
+  const [authCode, setAuthCode] = useState(() => {
+    // Auto-extract auth code from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('auth_code') || '';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Check if auth code was auto-extracted from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auth_code')) {
+      setMessage({ type: 'success', text: 'Auth code detected from URL! Click "Validate Auth Code" to continue.' });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleInputChange = (field: keyof AuthConfig, value: string) => {
     setConfig(prev => ({ ...prev, [field]: value }));
