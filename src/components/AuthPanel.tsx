@@ -11,7 +11,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
   const [config, setConfig] = useState<AuthConfig>({
     appId: 'MSEL25Z2K9-100',
     secret: '0O9FRN8DY0',
-    redirectUri: 'https://trade.fyers.in/api-login/redirect-uri/index.html'
+    redirectUri: window.location.origin
   });
   const [authCode, setAuthCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
