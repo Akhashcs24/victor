@@ -1,4 +1,4 @@
-# 🚀 Victor Trading App - Deployment Guide
+# 🚀 Victor TA - Deployment Guide
 
 ## **Option A: Vercel (Free Static Hosting) - RECOMMENDED**
 
@@ -32,7 +32,7 @@ vercel --prod
 ### **Limitations:**
 - ⚠️ App only runs when browser is open
 - ⚠️ Chrome may pause background tabs
-- ⚠️ No 24/7 automated trading
+- ⚠️ No 24/7 background processing
 
 ---
 
@@ -46,7 +46,7 @@ Your app includes **BackgroundService** that:
 ---
 
 ## **Upgrade Path: Server Hosting**
-When you're ready for 24/7 trading:
+When you need 24/7 processing:
 - **Railway**: $5/month - Easy deployment
 - **DigitalOcean**: $6/month - More control
 - **AWS/GCP**: Variable pricing
@@ -54,12 +54,12 @@ When you're ready for 24/7 trading:
 ---
 
 ## **Post-Deployment:**
-1. **Test authentication** with Fyers
-2. **Verify market data** fetching
-3. **Test paper trading** first
-4. **Keep browser tab active** for monitoring
+1. **Test authentication** system
+2. **Verify data** fetching
+3. **Test monitoring** features
+4. **Keep browser tab active** for continuous operation
 
 ## **Your Live URL:**
-After deployment: `https://victor-trading-[random].vercel.app`
+After deployment: `https://victor-ta-[random].vercel.app`
 
 **Ready to deploy? Your app is configured and ready to go! 🎉** 

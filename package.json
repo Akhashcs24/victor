@@ -1,7 +1,7 @@
 {
-  "name": "victor-trading-app",
+  "name": "victor-ta",
   "version": "2.0.0",
-  "description": "HMA-based options trading application with Fyers API integration",
+  "description": "Personal data analysis and monitoring application",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -31,12 +31,12 @@
     "vite": "^4.4.5",
     "vitest": "^0.34.0"
   },
-  "homepage": "https://victor-trading.vercel.app",
+  "homepage": "https://victor-ta.vercel.app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/victor-trading-app.git"
+    "url": "https://github.com/yourusername/Victor-ta.git"
   },
-  "keywords": ["trading", "options", "hma", "fyers", "react", "typescript"],
+  "keywords": ["data-analysis", "monitoring", "dashboard", "react", "typescript"],
   "author": "Your Name",
   "license": "MIT"
 }
