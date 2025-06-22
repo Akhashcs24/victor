@@ -24,12 +24,50 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
-app.use(cors({
-  origin: [process.env.CLIENT_URL, 'http://localhost:3000', 'http://localhost:3001'],
-  credentials: true
-}));
+
+// Custom CORS middleware
+app.use(function(req, res, next) {
+  // Allow specific origins or use "*" for any origin
+  const allowedOrigins = [
+    'https://client-6i8iqnepg-akhashcs24s-projects.vercel.app',
+    'https://client-qu0ey0h2i-akhashcs24s-projects.vercel.app',
+    'https://client-izlts6arf-akhashcs24s-projects.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development or testing, you can use "*"
+    res.header("Access-Control-Allow-Origin", "*");
+  }
+  
+  // Allow specific headers and methods
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Credentials", "true");
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// Only serve static files if client/dist exists (for development)
+const clientDistPath = path.join(__dirname, '../client/dist');
+const fs = require('fs');
+if (fs.existsSync(clientDistPath)) {
+  console.log('📁 Serving static files from client/dist');
+  app.use(express.static(clientDistPath));
+} else {
+  console.log('📁 Client dist directory not found - running as API-only backend');
+}
 
 // Simple in-memory cache for market data
 const marketDataCache = {
