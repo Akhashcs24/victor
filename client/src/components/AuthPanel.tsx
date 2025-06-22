@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Key, User, Globe, Clipboard } from 'lucide-react';
+import { Key, User, Globe, Clipboard, ExternalLink, Copy } from 'lucide-react';
 import { AuthConfig } from '../types';
 import { generateAuthUrl, validateAuthCode } from '../services/authService';
 
@@ -23,6 +23,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [directAuthUrl, setDirectAuthUrl] = useState<string | null>(null);
 
 
   // Check if auth code was auto-extracted from URL (keep for backward compatibility)
@@ -194,7 +195,31 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
         }
       }, 5 * 60 * 1000);
     } catch (error) {
-      setMessage({ type: 'error', text: `Failed to generate auth URL: ${error instanceof Error ? error.message : 'Unknown error'}` });
+      console.error('Failed to generate auth URL:', error);
+      
+      // Show a more informative error message with troubleshooting steps
+      setMessage({ 
+        type: 'error', 
+        text: `Backend connection issue: ${error instanceof Error ? error.message : 'Unknown error'}. 
+        Please check that the backend server is running and accessible.
+        
+        Troubleshooting steps:
+        1. Verify the backend URL is correct in environment variables
+        2. Check if the backend server is running
+        3. Check for CORS issues in browser console` 
+      });
+      
+      // Add a direct link to manually generate auth URL as fallback
+      const appId = config.appId;
+      const redirectUri = encodeURIComponent(config.redirectUri);
+      const state = Math.random().toString(36).substring(2, 15);
+      const nonce = Math.random().toString(36).substring(2, 15);
+      
+      // Create a direct URL to Fyers auth page as fallback
+      const directUrl = `https://api-t1.fyers.in/api/v3/generate-authcode?client_id=${appId}&redirect_uri=${redirectUri}&response_type=code&state=${state}&nonce=${nonce}`;
+      
+      // Show the direct URL option
+      setDirectAuthUrl(directUrl);
     } finally {
       setIsLoading(false);
     }
@@ -251,6 +276,31 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthSuccess }) => {
             message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
           }`}>
             {message.text}
+          </div>
+        )}
+
+        {directAuthUrl && (
+          <div className="mb-4 p-3 rounded-lg bg-yellow-100 text-yellow-800">
+            <p className="mb-2">If the automatic authentication isn't working, you can try the direct URL:</p>
+            <div className="flex space-x-2">
+              <a 
+                href={directAuthUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded flex items-center"
+              >
+                <ExternalLink className="w-4 h-4 mr-1" /> Open Fyers Auth Directly
+              </a>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(directAuthUrl);
+                  setMessage({ type: 'success', text: 'Direct URL copied to clipboard!' });
+                }}
+                className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded flex items-center"
+              >
+                <Copy className="w-4 h-4 mr-1" /> Copy URL
+              </button>
+            </div>
           </div>
         )}
 
