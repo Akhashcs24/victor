@@ -1,9 +1,11 @@
 {
+  "version": 2,
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
+  "installCommand": "npm install",
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -18,7 +20,5 @@
   "env": {
     "VITE_API_URL": "https://victor-backend.onrender.com"
   },
-  "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/dist",
   "framework": "vite"
 } 

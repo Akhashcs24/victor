@@ -1,84 +1,43 @@
 # Victor 3.0
 
-Victor 3.0 is a trading application for the Fyers platform, featuring HMA-based option trading strategy monitoring and execution.
+A trading application for automated strategy monitoring and execution.
 
 ## Project Structure
 
-The application is split into two parts:
+- **client**: Frontend React application built with Vite, TypeScript, and Tailwind CSS
+- **server**: Backend Node.js server providing API services
+- **backup**: Reference materials and previous versions
 
-- **Client**: React frontend application (in `/client`)
-- **Server**: Express backend API (in `/server`)
+## Features
 
-## Quick Start
+- Authentication with Fyers API
+- Real-time market data monitoring
+- Strategy implementation with HMA (Hull Moving Average)
+- Trade execution and logging
+- Multiple symbol monitoring
 
-### Using the restart-servers.bat script (Windows)
+## Setup
 
-The easiest way to start both the client and server is to run the `restart-servers.bat` script:
+### Prerequisites
 
+- Node.js (v14+)
+- npm or yarn
+
+### Client Setup
+
+```bash
+cd client
+npm install
+npm run dev
 ```
-./restart-servers.bat
+
+### Server Setup
+
+```bash
+cd server
+npm install
+npm start
 ```
-
-This will start both the backend server on port 5000 and the frontend client on port 3000.
-
-### Manual Setup
-
-#### Backend Server
-
-1. Navigate to the server directory:
-   ```
-   cd server
-   ```
-
-2. Install dependencies:
-   ```
-   npm install
-   ```
-
-3. Create a `.env` file with the following variables:
-   ```
-   PORT=5000
-   CLIENT_URL=http://localhost:3000
-   FYERS_APP_ID=your_fyers_app_id
-   FYERS_APP_SECRET=your_fyers_app_secret
-   ```
-
-4. Start the server:
-   ```
-   npm start
-   ```
-
-#### Frontend Client
-
-1. Navigate to the client directory:
-   ```
-   cd client
-   ```
-
-2. Install dependencies:
-   ```
-   npm install
-   ```
-
-3. Create a `.env` file with the following variables:
-   ```
-   VITE_API_URL=http://localhost:5000
-   ```
-
-4. Start the development server:
-   ```
-   npm run dev
-   ```
-
-## Deployment
-
-### Backend (Server)
-
-The backend can be deployed to platforms like Render or Railway. See the [server README](./server/README.md) for detailed instructions.
-
-### Frontend (Client)
-
-The frontend can be deployed to platforms like Vercel or Netlify. See the [client README](./client/README.md) for detailed instructions.
 
 ## Environment Variables
 
@@ -91,4 +50,27 @@ The frontend can be deployed to platforms like Vercel or Netlify. See the [clien
 
 ### Frontend
 
-- `VITE_API_URL` - URL of the backend API server 
+- `VITE_API_URL` - URL of the backend API server
+
+## Development
+
+The application uses:
+- React for the frontend UI
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Node.js for the backend
+- Fyers API for market data and trading
+
+## Deployment
+
+### Backend (Server)
+
+The backend can be deployed to platforms like Render or Railway. See the [server README](./server/README.md) for detailed instructions.
+
+### Frontend (Client)
+
+The frontend can be deployed to platforms like Vercel or Netlify. See the [client README](./client/README.md) for detailed instructions.
+
+## License
+
+[MIT](LICENSE)
