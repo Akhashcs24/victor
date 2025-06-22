@@ -1,4 +1,4 @@
-# Victor 3.0 Trading Application
+# Victor 3.0
 
 Victor 3.0 is a trading application for the Fyers platform, featuring HMA-based option trading strategy monitoring and execution.
 
