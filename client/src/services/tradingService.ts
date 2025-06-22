@@ -24,7 +24,9 @@ export class TradingService {
       trailingStopLossOffset: 10,
       timeBasedExit: false,
       exitAtMarketClose: false,
-      exitAfterMinutes: 60
+      exitAfterMinutes: 60,
+      targetType: 'POINTS',
+      stopLossType: 'POINTS'
     },
     ceMonitor: {
       symbol: '',
@@ -502,7 +504,9 @@ export class TradingService {
         trailingStopLossOffset: 10,
         timeBasedExit: false,
         exitAtMarketClose: false,
-        exitAfterMinutes: 60
+        exitAfterMinutes: 60,
+        targetType: 'POINTS',
+        stopLossType: 'POINTS'
       },
       ceMonitor: {
         symbol: '',

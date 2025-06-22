@@ -51,7 +51,9 @@ export const TradingInterface: React.FC<TradingInterfaceProps> = ({
     trailingStopLossOffset: 10,
     timeBasedExit: false,
     exitAtMarketClose: false,
-    exitAfterMinutes: 60
+    exitAfterMinutes: 60,
+    targetType: 'POINTS',
+    stopLossType: 'POINTS'
   });
 
   const [ceHMA, setCeHMA] = useState<HMAConfig | null>(null);
