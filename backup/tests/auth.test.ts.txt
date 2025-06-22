@@ -1,0 +1,13 @@
+describe("Authentication flow", () => {
+  it("shows inputs for App ID, Secret, and Redirect URI", () => {
+    // Renders input fields
+  });
+
+  it("generates auth link and accepts code input", () => {
+    // Opens new tab and receives auth code
+  });
+
+  it("exchanges auth code for token", () => {
+    // Calls token endpoint and validates success
+  });
+});

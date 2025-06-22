@@ -1,0 +1,93 @@
+import { HMAData } from '../types';
+
+// Get API URL from environment or use default
+const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:5000';
+
+/**
+ * Fetch and calculate HMA for a symbol
+ */
+export const fetchAndCalculateHMA = async (symbol: string): Promise<HMAData> => {
+  try {
+    const accessToken = localStorage.getItem('victor_access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+    
+    const response = await fetch(`${API_URL}/api/hma-calc?symbol=${encodeURIComponent(symbol)}`, {
+      headers: {
+        'Authorization': accessToken
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to calculate HMA');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error calculating HMA:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get HMA cache statistics
+ */
+export const getCacheStats = async (): Promise<any> => {
+  try {
+    const response = await fetch(`${API_URL}/api/hma-cache-stats`);
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to get HMA cache stats');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error getting HMA cache stats:', error);
+    throw error;
+  }
+};
+
+/**
+ * Clear HMA cache for a symbol
+ */
+export const clearCache = async (symbol: string): Promise<boolean> => {
+  try {
+    const accessToken = localStorage.getItem('victor_access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+    
+    const response = await fetch(`${API_URL}/api/hma-cache/clear`, {
+      method: 'POST',
+      headers: {
+        'Authorization': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ symbol })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to clear HMA cache');
+    }
+    
+    return data.success;
+  } catch (error) {
+    console.error('Error clearing HMA cache:', error);
+    throw error;
+  }
+};
+
+export default {
+  fetchAndCalculateHMA,
+  getCacheStats,
+  clearCache
+}; 

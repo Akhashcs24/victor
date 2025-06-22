@@ -1,0 +1,13 @@
+describe("Manual Inputs", () => {
+  it("allows user to enter CE and PE symbols", () => {
+    // Two input fields accept symbol strings
+  });
+
+  it("fetches HMA data on button click", () => {
+    // API is triggered when button is clicked
+  });
+
+  it("shows HMA-55 value in UI", () => {
+    // Parsed HMA value is rendered for each contract
+  });
+});

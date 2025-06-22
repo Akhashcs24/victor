@@ -1,55 +1,94 @@
-# Victor TA - Personal Data Analysis Application
+# Victor 3.0 Trading Application
 
-A modern React-based dashboard application for personal data monitoring and analysis.
+Victor 3.0 is a trading application for the Fyers platform, featuring HMA-based option trading strategy monitoring and execution.
 
-## Features
+## Project Structure
 
-- 📊 Real-time data monitoring
-- 🔐 Secure authentication system
-- 📈 Interactive charts and analytics
-- 💾 Persistent data storage
-- 🎯 Customizable monitoring parameters
-- 📱 Responsive design
+The application is split into two parts:
 
-## Technology Stack
+- **Client**: React frontend application (in `/client`)
+- **Server**: Express backend API (in `/server`)
 
-- **Frontend**: React 18 + TypeScript
-- **Styling**: Tailwind CSS
-- **Build Tool**: Vite
-- **Icons**: Lucide React
+## Quick Start
 
-## Getting Started
+### Using the restart-servers.bat script (Windows)
 
-### Prerequisites
-- Node.js 16+
-- npm or yarn
+The easiest way to start both the client and server is to run the `restart-servers.bat` script:
 
-### Installation
-
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/Victor-ta.git
-cd Victor-ta
+```
+./restart-servers.bat
 ```
 
-2. Install dependencies
-```bash
-npm install
-```
+This will start both the backend server on port 5000 and the frontend client on port 3000.
 
-3. Start development server
-```bash
-npm run dev
-```
+### Manual Setup
 
-4. Open [http://localhost:3000](http://localhost:3000)
+#### Backend Server
 
-## Build for Production
+1. Navigate to the server directory:
+   ```
+   cd server
+   ```
 
-```bash
-npm run build
-```
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-## License
+3. Create a `.env` file with the following variables:
+   ```
+   PORT=5000
+   CLIENT_URL=http://localhost:3000
+   FYERS_APP_ID=your_fyers_app_id
+   FYERS_APP_SECRET=your_fyers_app_secret
+   ```
 
-MIT License - Personal Use 
+4. Start the server:
+   ```
+   npm start
+   ```
+
+#### Frontend Client
+
+1. Navigate to the client directory:
+   ```
+   cd client
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Create a `.env` file with the following variables:
+   ```
+   VITE_API_URL=http://localhost:5000
+   ```
+
+4. Start the development server:
+   ```
+   npm run dev
+   ```
+
+## Deployment
+
+### Backend (Server)
+
+The backend can be deployed to platforms like Render or Railway. See the [server README](./server/README.md) for detailed instructions.
+
+### Frontend (Client)
+
+The frontend can be deployed to platforms like Vercel or Netlify. See the [client README](./client/README.md) for detailed instructions.
+
+## Environment Variables
+
+### Backend
+
+- `PORT` - Port to run the server on (default: 5000)
+- `CLIENT_URL` - URL of the frontend client (for CORS)
+- `FYERS_APP_ID` - Your Fyers API app ID
+- `FYERS_APP_SECRET` - Your Fyers API app secret
+
+### Frontend
+
+- `VITE_API_URL` - URL of the backend API server 

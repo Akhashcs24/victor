@@ -1,0 +1,124 @@
+import { AuthConfig } from '../types';
+
+// Get API URL from environment or use default
+const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:5000';
+
+/**
+ * Generate Fyers auth URL using backend
+ */
+export const generateAuthUrl = async (config: AuthConfig): Promise<string> => {
+  try {
+    const response = await fetch(`${API_URL}/api/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(config)
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to generate auth URL');
+    }
+    
+    return data.url;
+  } catch (error) {
+    console.error('Error generating auth URL:', error);
+    throw error;
+  }
+};
+
+/**
+ * Validate auth code and get access token
+ */
+export const validateAuthCode = async (code: string, config: AuthConfig): Promise<any> => {
+  try {
+    const response = await fetch(`${API_URL}/api/fyers-callback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        code,
+        ...config
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to validate auth code');
+    }
+    
+    // Store the access token in localStorage
+    if (data.access_token) {
+      localStorage.setItem('victor_access_token', data.access_token);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error validating auth code:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user profile
+ */
+export const getProfile = async (): Promise<any> => {
+  try {
+    const accessToken = localStorage.getItem('victor_access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+    
+    const response = await fetch(`${API_URL}/api/profile`, {
+      headers: {
+        'Authorization': accessToken
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to get profile');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error getting profile:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if user is authenticated
+ */
+export const isAuthenticated = (): boolean => {
+  return !!localStorage.getItem('victor_access_token');
+};
+
+/**
+ * Get access token from localStorage
+ */
+export const getAccessToken = (): string | null => {
+  return localStorage.getItem('victor_access_token');
+};
+
+/**
+ * Log out user
+ */
+export const logout = (): void => {
+  localStorage.removeItem('victor_access_token');
+};
+
+export default {
+  generateAuthUrl,
+  validateAuthCode,
+  getProfile,
+  isAuthenticated,
+  getAccessToken,
+  logout
+}; 

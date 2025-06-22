@@ -1,0 +1,13 @@
+describe("Trade Execution", () => {
+  it("places a market or limit order on trigger", () => {
+    // Uses user selection to place order
+  });
+
+  it("handles SL/Target exit logic", () => {
+    // Compares LTP to exit points
+  });
+
+  it("updates PnL based on exit price", () => {
+    // Real-time PnL calc is shown in card
+  });
+});
