@@ -31,12 +31,12 @@
     "vite": "^4.4.5",
     "vitest": "^0.34.0"
   },
-  "homepage": "https://victor-ta.vercel.app",
+  "homepage": "https://victor.vercel.app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/Victor-ta.git"
+    "url": "https://github.com/Akhashcs24/victor.git"
   },
-  "keywords": ["data-analysis", "monitoring", "dashboard", "react", "typescript"],
+  "keywords": ["data-analysis", "monitoring", "dashboard", "react", "typescript", "vite"],
   "author": "Your Name",
   "license": "MIT"
 }

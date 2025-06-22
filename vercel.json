@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "framework": "vite",
   "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
   "installCommand": "npm install",
@@ -19,6 +20,5 @@
   ],
   "env": {
     "VITE_API_URL": "https://victor-backend.onrender.com"
-  },
-  "framework": "vite"
+  }
 } 
