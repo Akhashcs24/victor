@@ -29,7 +29,8 @@ app.use(express.json());
 app.use(function(req, res, next) {
   // Allow specific origins or use "*" for any origin
   const allowedOrigins = [
-    'https://client-q4s0cljn7-akhashcs24s-projects.vercel.app', // Latest deployment with auto-fill target/SL feature
+    'https://client-la9s9c93v-akhashcs24s-projects.vercel.app', // Latest deployment with market data streaming fixes (v2.0.1)
+    'https://client-q4s0cljn7-akhashcs24s-projects.vercel.app', // Previous deployment with auto-fill target/SL feature
     'https://client-6u4laigih-akhashcs24s-projects.vercel.app', // Previous deployment with enhanced trade tracking
     'https://client-4198m9i51-akhashcs24s-projects.vercel.app', // Previous deployment URL with HMA fix
     'https://client-is7sn29fg-akhashcs24s-projects.vercel.app', // Previous deployment URL

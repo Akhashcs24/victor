@@ -1,6 +1,6 @@
 {
   "name": "victor-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend server for Victor trading app (Express)",
   "main": "index.js",
   "scripts": {
