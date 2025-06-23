@@ -1,6 +1,6 @@
 // Basic Express server for Victor trading app backend
 // This file starts the backend server and sets up basic middleware
-// Updated: June 23, 2025 - Added CORS support for new frontend deployment
+// Updated: 2024-12-19 23:45 - Added new frontend URL for comprehensive paper trading fixes
 
 require('dotenv').config();
 const express = require('express');
@@ -30,7 +30,8 @@ app.use(express.json());
 app.use(function(req, res, next) {
   // Allow specific origins or use "*" for any origin
   const allowedOrigins = [
-    'https://client-la9s9c93v-akhashcs24s-projects.vercel.app', // Latest deployment with market data streaming fixes (v2.0.1)
+    'https://client-gu0eor1zk-akhashcs24s-projects.vercel.app', // Latest deployment with comprehensive paper trading fixes
+    'https://client-la9s9c93v-akhashcs24s-projects.vercel.app', // Previous deployment with market data streaming fixes (v2.0.1)
     'https://client-q4s0cljn7-akhashcs24s-projects.vercel.app', // Previous deployment with auto-fill target/SL feature
     'https://client-6u4laigih-akhashcs24s-projects.vercel.app', // Previous deployment with enhanced trade tracking
     'https://client-4198m9i51-akhashcs24s-projects.vercel.app', // Previous deployment URL with HMA fix
