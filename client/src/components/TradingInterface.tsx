@@ -41,8 +41,8 @@ export const TradingInterface: React.FC<TradingInterfaceProps> = ({
     peSymbol: '',
     ceLots: 1,
     peLots: 1,
-    targetPoints: 50,
-    stopLossPoints: 30,
+    targetPoints: 40,
+    stopLossPoints: 15,
     entryMethod: 'MARKET',
     // Initialize new strategy options with default values
     autoExitOnTarget: true,

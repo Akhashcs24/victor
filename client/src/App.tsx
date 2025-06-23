@@ -209,6 +209,25 @@ function App() {
   const handleIndexChange = async (index: string) => {
     TradingService.updateSelectedIndex(index);
     setHeaderStatus(prev => ({ ...prev, selectedIndex: index }));
+    
+    // Auto-fill target and stop loss based on index selection
+    const indexDefaults = {
+      'NIFTY': { targetPoints: 40, stopLossPoints: 15 },
+      'BANKNIFTY': { targetPoints: 60, stopLossPoints: 20 },
+      'SENSEX': { targetPoints: 600, stopLossPoints: 30 }
+    };
+    
+    const defaults = indexDefaults[index as keyof typeof indexDefaults];
+    if (defaults) {
+      console.log(`🎯 Auto-filling target/SL for ${index}: Target=${defaults.targetPoints}, SL=${defaults.stopLossPoints}`);
+      
+      // Update trading service with new target/SL values
+      await TradingService.updateContractInputs({
+        targetPoints: defaults.targetPoints,
+        stopLossPoints: defaults.stopLossPoints
+      });
+    }
+    
     setTradingState(TradingService.getTradingState());
     
     // Clear existing strike symbols
@@ -486,8 +505,8 @@ function App() {
         peSymbol: '',
         ceLots: 1,
         peLots: 1,
-        targetPoints: 50,
-        stopLossPoints: 30,
+        targetPoints: 40,
+        stopLossPoints: 15,
         entryMethod: 'MARKET',
         autoExitOnTarget: true,
         autoExitOnStopLoss: true,
@@ -534,8 +553,8 @@ function App() {
       peSymbol: '',
       ceLots: 1,
       peLots: 1,
-      targetPoints: 50,
-      stopLossPoints: 30,
+      targetPoints: 40,
+      stopLossPoints: 15,
       entryMethod: 'MARKET',
       autoExitOnTarget: true,
       autoExitOnStopLoss: true,
@@ -836,7 +855,7 @@ function App() {
                           </select>
                           <input 
                             type="number" 
-                            placeholder="50"
+                            placeholder={headerStatus.selectedIndex === 'NIFTY' ? '40' : headerStatus.selectedIndex === 'BANKNIFTY' ? '60' : '600'}
                             value={tradingState.contractInputs.targetPoints}
                             onChange={(e) => handleContractInputChange('targetPoints', parseInt(e.target.value) || 0)}
                             className="w-2/3 px-4 py-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-slate-400 transition-colors text-slate-900 placeholder-slate-500"
@@ -865,7 +884,7 @@ function App() {
                           </select>
                           <input 
                             type="number" 
-                            placeholder="30"
+                            placeholder={headerStatus.selectedIndex === 'NIFTY' ? '15' : headerStatus.selectedIndex === 'BANKNIFTY' ? '20' : '30'}
                             value={tradingState.contractInputs.stopLossPoints}
                             onChange={(e) => handleContractInputChange('stopLossPoints', parseInt(e.target.value) || 0)}
                             className="w-2/3 px-4 py-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-slate-400 transition-colors text-slate-900 placeholder-slate-500"
@@ -892,6 +911,22 @@ function App() {
                           <option value="LIMIT">Limit</option>
                         </select>
                       </div>
+                    </div>
+
+                    {/* Auto-fill helper text */}
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-sm text-blue-800 font-medium">Auto-fill enabled</span>
+                      </div>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Target/SL values are automatically set based on your index selection:
+                        <span className="font-mono ml-1">
+                          NIFTY (40/15) • BANKNIFTY (60/20) • SENSEX (600/30)
+                        </span>
+                      </p>
                     </div>
 
                     {/* Exit Strategy Settings - Removed grey background and title, arranged in 3 columns */}
