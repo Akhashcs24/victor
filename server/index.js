@@ -29,16 +29,7 @@ app.use(express.json());
 app.use(function(req, res, next) {
   // Allow specific origins or use "*" for any origin
   const allowedOrigins = [
-    'https://client-6i8iqnepg-akhashcs24s-projects.vercel.app',
-    'https://client-qu0ey0h2i-akhashcs24s-projects.vercel.app',
-    'https://client-izlts6arf-akhashcs24s-projects.vercel.app',
-    'https://client-cr5w8anek-akhashcs24s-projects.vercel.app',
-    'https://client-q5s7dtxpi-akhashcs24s-projects.vercel.app',
-    'https://client-dkydevmtr-akhashcs24s-projects.vercel.app',
-    'https://client-gewfgz93u-akhashcs24s-projects.vercel.app',
-    'https://client-awsd7qusd-akhashcs24s-projects.vercel.app',
-    'https://client-b2wq2k3yw-akhashcs24s-projects.vercel.app',
-    'https://client-ofh1k9ahl-akhashcs24s-projects.vercel.app',
+    'https://client-akhashcs24-akhashcs24s-projects.vercel.app', // Stable project URL - won't change
     'http://localhost:3000',
     'http://localhost:3001'
   ];
