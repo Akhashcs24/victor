@@ -62,3 +62,4 @@ This will create a `dist` directory with the compiled assets.
 
 ## Notes
 - The frontend will talk to the backend using the API URL set in `.env.local` (e.g., `
+- Updated with critical market data streaming fixes (v2.0.1)

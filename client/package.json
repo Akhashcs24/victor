@@ -1,6 +1,6 @@
 {
   "name": "victor-ta",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Personal data analysis and monitoring application",
   "type": "module",
   "scripts": {
