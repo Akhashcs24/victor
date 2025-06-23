@@ -182,7 +182,15 @@ export class HMAService {
         const timeInMinutes = hours * 60 + minutes;
         
         return timeInMinutes >= this.MARKET_START_MINUTES && timeInMinutes <= this.MARKET_END_MINUTES;
-      });
+      })
+      .map(candle => ({
+        timestamp: candle.timestamp,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume
+      }));
   }
 
   /**
