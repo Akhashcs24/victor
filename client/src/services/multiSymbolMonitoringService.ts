@@ -132,6 +132,9 @@ export class MultiSymbolMonitoringService {
         stopLossType
       };
 
+      // Initialize crossover tracking state
+      (monitorEntry as any).previousPriceAboveHMA = null;
+
       this.monitoredSymbols.push(monitorEntry);
       this.saveMonitoredSymbols();
 
@@ -435,7 +438,8 @@ export class MultiSymbolMonitoringService {
       this.saveMonitoredSymbols();
       
       // Add to persistent trade log
-      PersistentTradeLogService.addTradeLog({
+      const { PersistentTradeLogService } = await import('./persistentTradeLogService');
+      await PersistentTradeLogService.addTradeLog({
         symbol: entry.symbol,
         action: 'SELL',
         price,
@@ -444,7 +448,7 @@ export class MultiSymbolMonitoringService {
         pnl,
         status: 'COMPLETED',
         remarks: `${entry.type} exit: ${reason} (P&L: ₹${pnl.toFixed(2)})`,
-        tradingMode: 'LIVE'
+        tradingMode: 'PAPER' // Default to paper trading
       });
       
     } catch (error) {
@@ -523,13 +527,28 @@ export class MultiSymbolMonitoringService {
 
     const priceIsAboveHMA = currentPrice > entry.hmaValue;
 
-    if (priceIsAboveHMA) {
+    // We need to track the previous price state to detect actual crossover
+    // If this is the first time we're checking, store the current state
+    if (entry.lastUpdate === null) {
+      // First time checking - just record the current state, don't trigger
+      console.log(`📊 ${entry.symbol} (${entry.type}) Initial state: Price ${currentPrice} ${priceIsAboveHMA ? 'above' : 'below'} HMA ${entry.hmaValue}`);
+      return;
+    }
+
+    // Get the previous state from our stored data
+    const previousPriceWasAboveHMA = (entry as any).previousPriceAboveHMA;
+    
+    // Store current state for next iteration
+    (entry as any).previousPriceAboveHMA = priceIsAboveHMA;
+
+    // Detect actual crossover: price was below HMA and is now above HMA
+    if (!previousPriceWasAboveHMA && priceIsAboveHMA) {
+      // This is an actual crossover!
       if (!entry.crossoverSignalTime) {
-        // Price crossed above HMA for the first time
         entry.crossoverSignalTime = new Date();
-        console.log(`📈 ${entry.symbol} (${entry.type}) Price (${currentPrice}) crossed above HMA (${entry.hmaValue}). Waiting for 1-min candle close.`);
+        console.log(`🎯 ${entry.symbol} (${entry.type}) CROSSOVER DETECTED! Price (${currentPrice}) crossed above HMA (${entry.hmaValue}). Waiting for 1-min candle close.`);
       } else {
-        // Check if a new minute has started
+        // Check if a new minute has started since crossover
         const now = new Date();
         if (now.getMinutes() !== entry.crossoverSignalTime.getMinutes()) {
           console.log(`✅ ${entry.symbol} (${entry.type}) Entry Confirmed! Price still above HMA at new candle.`);
@@ -537,13 +556,22 @@ export class MultiSymbolMonitoringService {
           entry.crossoverSignalTime = null;
         }
       }
-    } else {
-      // Price is below HMA
+    } else if (previousPriceWasAboveHMA && !priceIsAboveHMA) {
+      // Price fell back below HMA - cancel any pending crossover
       if (entry.crossoverSignalTime) {
-        console.log(`📉 ${entry.symbol} (${entry.type}) Price fell below HMA. Cancelling entry signal.`);
+        console.log(`📉 ${entry.symbol} (${entry.type}) Price fell below HMA. Cancelling crossover signal.`);
+        entry.crossoverSignalTime = null;
+      }
+    } else if (priceIsAboveHMA && entry.crossoverSignalTime) {
+      // Price is still above HMA and we have a pending crossover - check for candle close
+      const now = new Date();
+      if (now.getMinutes() !== entry.crossoverSignalTime.getMinutes()) {
+        console.log(`✅ ${entry.symbol} (${entry.type}) Entry Confirmed! Price still above HMA at new candle.`);
+        await this.executeEntry(entry, currentPrice);
         entry.crossoverSignalTime = null;
       }
     }
+    // If price was already above HMA and is still above HMA (no crossover), do nothing
   }
 
   /**
@@ -588,15 +616,17 @@ export class MultiSymbolMonitoringService {
         console.log(`🔄 ${entry.symbol} moved from monitoring to trade log`);
       }, 1000); // Small delay to ensure trade log is updated first
       
-      // Add trade log using TradingService
-      const { TradingService } = require('./tradingService');
-      TradingService.addTradeLog({
+      // Add trade log using PersistentTradeLogService directly
+      const { PersistentTradeLogService } = await import('./persistentTradeLogService');
+      await PersistentTradeLogService.addTradeLog({
         symbol: entry.symbol,
         action: 'BUY', // Use BUY for entries to match TradeLog interface
         quantity: orderData.qty, // Use calculated quantity from OrderService
         price: price,
         orderType: entry.entryMethod,
         status: 'COMPLETED',
+        pnl: null, // Entry trade has no P&L yet
+        tradingMode: 'PAPER', // Default to paper trading
         remarks: `HMA crossover entry - ${entry.lots} lots (${orderData.qty} qty) - Order Tag: ${orderData.orderTag}`
       });
       
