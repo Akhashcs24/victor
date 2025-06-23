@@ -590,6 +590,84 @@ function App() {
     setTradingState(TradingService.getTradingState());
   };
 
+  // Handle Monitor ATM button click
+  const handleMonitorATM = async () => {
+    if (!headerStatus.selectedIndex) {
+      alert('Please select an index first');
+      return;
+    }
+
+    try {
+      // Get current market data for the selected index
+      const indexSymbol = getIndexSymbol(headerStatus.selectedIndex);
+      const currentMarketData = marketData.get(indexSymbol);
+      
+      if (!currentMarketData) {
+        alert('Market data not available. Please wait for data to load.');
+        return;
+      }
+
+      // Get ATM strikes using FixedSymbolService
+      const strikeResult = FixedSymbolService.fixedSymbolService(headerStatus.selectedIndex, currentMarketData.ltp);
+      
+      // Find ATM CE and PE symbols
+      const atmCE = strikeResult.ce.find(strike => strike.type === 'ATM');
+      const atmPE = strikeResult.pe.find(strike => strike.type === 'ATM');
+      
+      if (!atmCE || !atmPE) {
+        alert('ATM strikes not found. Please try again.');
+        return;
+      }
+
+      // Get current trading settings
+      const currentSettings = tradingState.contractInputs;
+      
+      // Add both CE and PE to monitoring
+      await MultiSymbolMonitoringService.addSymbolToMonitoring(
+        atmCE.symbol,
+        'CE',
+        currentSettings.ceLots || 1,
+        currentSettings.targetPoints || (headerStatus.selectedIndex === 'NIFTY' ? 40 : headerStatus.selectedIndex === 'BANKNIFTY' ? 60 : 100),
+        currentSettings.stopLossPoints || (headerStatus.selectedIndex === 'NIFTY' ? 15 : headerStatus.selectedIndex === 'BANKNIFTY' ? 20 : 30),
+        currentSettings.entryMethod || 'MARKET',
+        currentSettings.autoExitOnTarget ?? true,
+        currentSettings.autoExitOnStopLoss ?? true,
+        currentSettings.trailingStopLoss ?? false,
+        currentSettings.trailingStopLossOffset || 10,
+        currentSettings.timeBasedExit ?? false,
+        currentSettings.exitAtMarketClose ?? false,
+        currentSettings.exitAfterMinutes || 60,
+        currentSettings.targetType || 'POINTS',
+        currentSettings.stopLossType || 'POINTS'
+      );
+
+      await MultiSymbolMonitoringService.addSymbolToMonitoring(
+        atmPE.symbol,
+        'PE',
+        currentSettings.peLots || 1,
+        currentSettings.targetPoints || (headerStatus.selectedIndex === 'NIFTY' ? 40 : headerStatus.selectedIndex === 'BANKNIFTY' ? 60 : 100),
+        currentSettings.stopLossPoints || (headerStatus.selectedIndex === 'NIFTY' ? 15 : headerStatus.selectedIndex === 'BANKNIFTY' ? 20 : 30),
+        currentSettings.entryMethod || 'MARKET',
+        currentSettings.autoExitOnTarget ?? true,
+        currentSettings.autoExitOnStopLoss ?? true,
+        currentSettings.trailingStopLoss ?? false,
+        currentSettings.trailingStopLossOffset || 10,
+        currentSettings.timeBasedExit ?? false,
+        currentSettings.exitAtMarketClose ?? false,
+        currentSettings.exitAfterMinutes || 60,
+        currentSettings.targetType || 'POINTS',
+        currentSettings.stopLossType || 'POINTS'
+      );
+
+      // Show success message
+      alert(`✅ ATM options added to monitoring:\n\nCE: ${atmCE.label}\nPE: ${atmPE.label}\n\nTarget: ${currentSettings.targetPoints || (headerStatus.selectedIndex === 'NIFTY' ? 40 : headerStatus.selectedIndex === 'BANKNIFTY' ? 60 : 100)} points\nStop Loss: ${currentSettings.stopLossPoints || (headerStatus.selectedIndex === 'NIFTY' ? 15 : headerStatus.selectedIndex === 'BANKNIFTY' ? 20 : 30)} points`);
+
+    } catch (error) {
+      console.error('Error adding ATM options to monitoring:', error);
+      alert('Error adding ATM options to monitoring. Please try again.');
+    }
+  };
+
   return (
           <div className="min-h-screen bg-slate-50">
               {isAuthenticated && <Header status={headerStatus} onStatusUpdate={handleStatusUpdate} onLogout={handleLogout} />}
@@ -732,6 +810,21 @@ function App() {
                         <option value="BANKNIFTY">Bank Nifty</option>
                         <option value="SENSEX">Sensex</option>
                       </select>
+                    </div>
+                    
+                    {/* Monitor ATM Button */}
+                    <div className="mt-4">
+                      <button
+                        onClick={handleMonitorATM}
+                        disabled={!headerStatus.selectedIndex || isLoadingMarketData}
+                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                        title={`Add ATM CE and PE options for ${headerStatus.selectedIndex} to monitoring`}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Monitor ATM
+                      </button>
                     </div>
                     
                     {/* Mode Description */}
