@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { AuthPanel } from './components/AuthPanel';
 import { MonitoringDashboard } from './components/MonitoringDashboard';
+import { ActiveTradesTable } from './components/ActiveTradesTable';
 import { TradeLog } from './components/TradeLog';
 import { AllLogsPage } from './components/AllLogsPage';
 import { 
@@ -107,6 +108,10 @@ function App() {
         
         // Initialize BackgroundService to keep app active
         BackgroundService.initialize();
+        
+        // Initialize Live P&L Tracking Service
+        const { LivePnLTrackingService } = await import('./services/livePnLTrackingService');
+        await LivePnLTrackingService.startTracking();
       } catch (error) {
         console.error('Error initializing services:', error);
       }
@@ -119,6 +124,11 @@ function App() {
       TradingService.stopMonitoring();
       MultiSymbolMonitoringService.stopMonitoring();
       BackgroundService.cleanup();
+      
+      // Stop P&L tracking
+      import('./services/livePnLTrackingService').then(({ LivePnLTrackingService }) => {
+        LivePnLTrackingService.stopTracking();
+      });
     };
   }, []);
 
@@ -1168,6 +1178,12 @@ function App() {
             {/* Monitoring Dashboard */}
             <MonitoringDashboard onUpdate={() => {
               // Force re-render to show updated monitoring list
+              setTradingState(prev => ({ ...prev }));
+            }} />
+
+            {/* Active Trades Table */}
+            <ActiveTradesTable onUpdate={() => {
+              // Force re-render to show updated trades
               setTradingState(prev => ({ ...prev }));
             }} />
 

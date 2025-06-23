@@ -279,6 +279,7 @@ export interface MonitorEntry {
   triggerStatus: 'WAITING' | 'ENTERED' | 'EXITED';
   entryPrice: number | null;
   lastUpdate: Date | null;
+  lastHMAUpdate: Date | null; // Track when HMA was last updated
   crossoverSignalTime: Date | null;
   lots: number;
   targetPoints: number;

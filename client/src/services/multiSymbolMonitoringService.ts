@@ -115,6 +115,7 @@ export class MultiSymbolMonitoringService {
         triggerStatus: 'WAITING',
         entryPrice: null,
         lastUpdate: null,
+        lastHMAUpdate: new Date(), // Initialize with current time since we just calculated HMA
         crossoverSignalTime: null,
         lots,
         targetPoints,
@@ -298,6 +299,9 @@ export class MultiSymbolMonitoringService {
         entry.currentLTP = marketData.ltp;
         entry.lastUpdate = new Date();
         
+        // Update HMA value every 5 minutes to ensure we're using fresh HMA data
+        await this.updateHMAIfNeeded(entry);
+        
         // Check for crossover if waiting
         if (entry.triggerStatus === 'WAITING') {
           await this.checkCrossover(entry, marketData.ltp);
@@ -313,6 +317,82 @@ export class MultiSymbolMonitoringService {
       
     } catch (error) {
       console.error('❌ Error in processBatch:', error);
+    }
+  }
+
+  /**
+   * Calculate if we should update HMA based on exact 5-minute intervals
+   */
+  private static shouldUpdateHMAAtInterval(): boolean {
+    const now = new Date();
+    
+    // Convert to IST
+    const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const minutes = istTime.getMinutes();
+    const seconds = istTime.getSeconds();
+    
+    // Check if we're at a 5-minute interval (0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55 minutes)
+    // and within the first 5 seconds of that minute
+    const isAtFiveMinuteInterval = minutes % 5 === 0;
+    const isWithinFirstFiveSeconds = seconds <= 5;
+    
+    return isAtFiveMinuteInterval && isWithinFirstFiveSeconds;
+  }
+
+  /**
+   * Update HMA if we're at a 5-minute interval or if it's never been updated
+   */
+  private static async updateHMAIfNeeded(entry: MonitorEntry): Promise<void> {
+    try {
+      const now = new Date();
+      const shouldUpdate = !entry.lastHMAUpdate || this.shouldUpdateHMAAtInterval();
+      
+      // Special case: If it's been more than 10 minutes, force update regardless of interval
+      const tenMinutesInMs = 10 * 60 * 1000;
+      const forceUpdate = entry.lastHMAUpdate && (now.getTime() - entry.lastHMAUpdate.getTime()) > tenMinutesInMs;
+      
+      if (shouldUpdate || forceUpdate) {
+        // Import HMAService dynamically to avoid circular dependencies
+        const { HMAService } = await import('./hmaService');
+        
+        // Get the current HMA value from cache (if live monitoring is active)
+        const currentHMA = HMAService.getCurrentHMA(entry.symbol);
+        
+        if (currentHMA !== null) {
+          // Update with cached HMA value
+          entry.hmaValue = currentHMA;
+          entry.lastHMAUpdate = now;
+          
+          const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+          const timeStr = istTime.toLocaleString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+          
+          console.log(`📈 Updated HMA for ${entry.symbol}: ${currentHMA.toFixed(2)} at ${timeStr} IST (5-min interval)`);
+        } else {
+          // If no cached value, fetch fresh HMA data
+          console.log(`🔄 Fetching fresh HMA for ${entry.symbol} at 5-minute interval...`);
+          const hmaConfig = await HMAService.fetchAndCalculateHMA(entry.symbol);
+          entry.hmaValue = hmaConfig.currentHMA;
+          entry.lastHMAUpdate = now;
+          
+          const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+          const timeStr = istTime.toLocaleString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+          
+          console.log(`📈 Updated HMA for ${entry.symbol}: ${hmaConfig.currentHMA.toFixed(2)} at ${timeStr} IST (fresh fetch)`);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error updating HMA for ${entry.symbol}:`, error);
+      // Don't throw - continue with existing HMA value
     }
   }
 
@@ -625,7 +705,7 @@ export class MultiSymbolMonitoringService {
       
       // Add trade log using PersistentTradeLogService directly
       const { PersistentTradeLogService } = await import('./persistentTradeLogService');
-      await PersistentTradeLogService.addTradeLog({
+      const tradeLog = await PersistentTradeLogService.addTradeLog({
         symbol: entry.symbol,
         action: 'BUY', // Use BUY for entries to match TradeLog interface
         quantity: orderData.qty, // Use calculated quantity from OrderService
@@ -634,8 +714,17 @@ export class MultiSymbolMonitoringService {
         status: 'COMPLETED',
         pnl: null, // Entry trade has no P&L yet
         tradingMode: 'PAPER', // Default to paper trading
-        remarks: `HMA crossover entry - ${entry.lots} lots (${orderData.qty} qty) - Order Tag: ${orderData.orderTag}`
+        remarks: `HMA crossover entry - ${entry.lots} lots (${orderData.qty} qty) - Target: ₹${(price + entry.targetPoints).toFixed(2)} - SL: ₹${(price - entry.stopLossPoints).toFixed(2)} - Order Tag: ${orderData.orderTag}`
       });
+
+      // Start live P&L tracking for this position
+      const { LivePnLTrackingService } = await import('./livePnLTrackingService');
+      LivePnLTrackingService.addPosition(tradeLog);
+      
+      // Start tracking service if not already running
+      if (!LivePnLTrackingService.isCurrentlyTracking()) {
+        await LivePnLTrackingService.startTracking();
+      }
       
       console.log(`✅ ${entry.symbol} (${entry.type}) entry executed: ${entry.lots} lots = ${orderData.qty} qty at ₹${price}`);
       
@@ -707,6 +796,8 @@ export class MultiSymbolMonitoringService {
         addedAt: new Date(entry.addedAt),
         // Reset lastUpdate to null to force fresh timestamps
         lastUpdate: null,
+        // Reset lastHMAUpdate to null to force fresh HMA calculation
+        lastHMAUpdate: null,
         crossoverSignalTime: entry.crossoverSignalTime ? new Date(entry.crossoverSignalTime) : null,
         // Reset previous price state to force fresh crossover detection
         previousPriceAboveHMA: null
@@ -775,6 +866,21 @@ export class MultiSymbolMonitoringService {
     this.currentBatchIndex = 0;
     
     console.log('✅ DEBUG: All data cleared and reset');
+  }
+
+  /**
+   * Force refresh all timestamps to current time (debug method)
+   */
+  static debugRefreshTimestamps(): void {
+    console.log('🔄 DEBUG: Refreshing all timestamps to current time');
+    
+    this.monitoredSymbols.forEach(entry => {
+      entry.lastUpdate = null; // Reset to force fresh timestamps
+      entry.lastHMAUpdate = null; // Reset HMA timestamps too
+    });
+    
+    this.saveMonitoredSymbols();
+    console.log('✅ DEBUG: All timestamps reset - next update will show current time');
   }
 
   /**

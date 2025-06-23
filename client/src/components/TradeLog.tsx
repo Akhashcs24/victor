@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -7,9 +7,11 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Eye
+  Eye,
+  Activity
 } from 'lucide-react';
 import { TradeLog as TradeLogType } from '../types';
+import { LivePnLTrackingService, LivePosition } from '../services/livePnLTrackingService';
 
 interface TradeLogProps {
   logs: TradeLogType[];
@@ -18,6 +20,31 @@ interface TradeLogProps {
 }
 
 export const TradeLog: React.FC<TradeLogProps> = ({ logs, onViewAllLogs, onManualExit }) => {
+  const [livePositions, setLivePositions] = useState<LivePosition[]>([]);
+
+  // Update live positions every 5 seconds
+  useEffect(() => {
+    const updatePositions = () => {
+      setLivePositions(LivePnLTrackingService.getAllPositions());
+    };
+
+    updatePositions(); // Initial update
+    const interval = setInterval(updatePositions, 5000); // Update every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Get live P&L for a trade ID
+  const getLivePnL = (tradeId: string): number | null => {
+    const position = livePositions.find(pos => pos.tradeId === tradeId);
+    return position?.livePnL || null;
+  };
+
+  // Get current price for a trade ID
+  const getCurrentPrice = (tradeId: string): number | null => {
+    const position = livePositions.find(pos => pos.tradeId === tradeId);
+    return position?.currentPrice || null;
+  };
   const getActionIcon = (action: string) => {
     return action === 'BUY' ? 
       <TrendingUp className="w-4 h-4 text-success-500" /> : 
@@ -98,25 +125,53 @@ export const TradeLog: React.FC<TradeLogProps> = ({ logs, onViewAllLogs, onManua
 
               <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Price:</span>
+                  <span className="text-slate-600">Entry Price:</span>
                   <span className="font-semibold text-slate-900">₹{log.price.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Qty:</span>
                   <span className="font-semibold text-slate-900">{log.quantity}</span>
                 </div>
+                
+                {/* Show current price for BUY orders */}
+                {log.action === 'BUY' && log.status === 'COMPLETED' && getCurrentPrice(log.id) && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 flex items-center gap-1">
+                      <Activity className="w-3 h-3" />
+                      Current:
+                    </span>
+                    <span className="font-semibold text-blue-600">₹{getCurrentPrice(log.id)!.toFixed(2)}</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between">
                   <span className="text-slate-600">Type:</span>
                   <span className="font-semibold text-slate-900">{log.orderType}</span>
                 </div>
-                {log.pnl !== undefined && log.pnl !== null && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">P&L:</span>
-                    <span className={`font-bold ${getPnLColor(log.pnl)}`}>
-                      ₹{log.pnl.toFixed(2)}
-                    </span>
-                  </div>
-                )}
+                
+                {/* Show live P&L for open positions or static P&L for closed positions */}
+                {(() => {
+                  const livePnL = log.action === 'BUY' && log.status === 'COMPLETED' ? getLivePnL(log.id) : null;
+                  const displayPnL = livePnL !== null ? livePnL : log.pnl;
+                  
+                  if (displayPnL !== undefined && displayPnL !== null) {
+                    return (
+                      <div className="flex justify-between">
+                        <span className="text-slate-600 flex items-center gap-1">
+                          {livePnL !== null && (
+                            <Activity className="w-3 h-3 text-green-500" />
+                          )}
+                          P&L:
+                        </span>
+                        <span className={`font-bold ${getPnLColor(displayPnL)} flex items-center gap-1`}>
+                          {livePnL !== null && <span className="text-xs">LIVE</span>}
+                          ₹{displayPnL.toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               {log.remarks && (
@@ -162,11 +217,38 @@ export const TradeLog: React.FC<TradeLogProps> = ({ logs, onViewAllLogs, onManua
       {logs.length > 0 && (
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Total P&L:</span>
+            <span className="text-gray-600 flex items-center gap-1">
+              <Activity className="w-4 h-4 text-green-500" />
+              Total P&L (Live):
+            </span>
             <span className={`font-medium ${getPnLColor(
-              logs.reduce((total, log) => total + (log.pnl ?? 0), 0)
+              (() => {
+                const totalPnL = logs.reduce((total, log) => {
+                  // Use live P&L for open BUY positions, otherwise use static P&L
+                  const livePnL = log.action === 'BUY' && log.status === 'COMPLETED' ? getLivePnL(log.id) : null;
+                  const pnl = livePnL !== null ? livePnL : (log.pnl ?? 0);
+                  return total + pnl;
+                }, 0);
+                return totalPnL;
+              })()
             )}`}>
-              ₹{logs.reduce((total, log) => total + (log.pnl ?? 0), 0).toFixed(2)}
+              ₹{(() => {
+                const totalPnL = logs.reduce((total, log) => {
+                  const livePnL = log.action === 'BUY' && log.status === 'COMPLETED' ? getLivePnL(log.id) : null;
+                  const pnl = livePnL !== null ? livePnL : (log.pnl ?? 0);
+                  return total + pnl;
+                }, 0);
+                return totalPnL.toFixed(2);
+              })()}
+            </span>
+          </div>
+          
+          {/* Show live tracking status */}
+          <div className="flex items-center justify-between text-xs text-slate-500 mt-2">
+            <span>Live positions: {livePositions.length}</span>
+            <span className="flex items-center gap-1">
+              <Activity className="w-3 h-3" />
+              Updates every 5s
             </span>
           </div>
         </div>

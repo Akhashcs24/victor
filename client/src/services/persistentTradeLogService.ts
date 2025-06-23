@@ -176,7 +176,16 @@ export class PersistentTradeLogService {
     }
     
     // Otherwise fetch from backend
-    return await this.fetchLogsFromBackend();
+    try {
+      return await this.fetchLogsFromBackend();
+    } catch (error) {
+      console.warn('❌ Failed to fetch from backend, using cached data:', error);
+      // If backend fails, use cached data if available, otherwise fallback to localStorage
+      if (Object.keys(this.cachedLogs).length > 0) {
+        return this.cachedLogs;
+      }
+      return this.getStoredLogs();
+    }
   }
 
   /**

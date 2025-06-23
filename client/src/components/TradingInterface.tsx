@@ -262,7 +262,7 @@ export const TradingInterface: React.FC<TradingInterfaceProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">
               CE Lots 🔥
@@ -299,7 +299,7 @@ export const TradingInterface: React.FC<TradingInterfaceProps> = ({
               min="1"
             />
           </div>
-          <div className="col-span-2 sm:col-span-1">
+          <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Entry Method</label>
             <select
               value={contractInputs.entryMethod}

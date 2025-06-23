@@ -131,6 +131,20 @@ export const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ onUpda
         >
           Stop All
         </button>
+        
+        {/* Debug button to fix timestamp issues */}
+        {process.env.NODE_ENV === 'development' && (
+          <button
+            onClick={() => {
+              MultiSymbolMonitoringService.debugRefreshTimestamps();
+              onUpdate?.();
+            }}
+            className="ml-2 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            title="Refresh timestamps (debug)"
+          >
+            🔄 Fix Time
+          </button>
+        )}
       </div>
       
       <div className="overflow-x-auto">

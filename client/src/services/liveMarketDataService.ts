@@ -57,7 +57,7 @@ export class LiveMarketDataService {
           volume: quote.volume || 0,
           change: quote.change || 0,
           changePercent: quote.changePercent || 0,
-          timestamp: new Date(quote.timestamp)
+          timestamp: new Date() // Always use current time for fresh timestamps
         };
       }
 
@@ -116,7 +116,7 @@ export class LiveMarketDataService {
               volume: quote.volume || 0,
               change: quote.change || 0,
               changePercent: quote.changePercent || 0,
-              timestamp: new Date(quote.timestamp)
+              timestamp: new Date() // Always use current time for fresh timestamps
             };
             results.set(quote.symbol, marketData);
           });
@@ -138,7 +138,7 @@ export class LiveMarketDataService {
                 volume: quote.volume || 0,
                 change: quote.change || 0,
                 changePercent: quote.changePercent || 0,
-                timestamp: new Date(quote.timestamp)
+                timestamp: new Date() // Always use current time for fresh timestamps
               };
               results.set(symbol, marketData);
             }
