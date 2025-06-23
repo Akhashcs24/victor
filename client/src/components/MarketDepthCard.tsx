@@ -58,7 +58,15 @@ export const MarketDepthCard: React.FC<MarketDepthCardProps> = ({
           <p className="text-xs text-slate-400 font-mono">{symbol}</p>
           {/* Last Updated Time */}
           <p className="text-xs text-slate-300 mt-1">
-            Last updated: {data?.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '--'}
+            {data?.timestamp ? new Date(data.timestamp).toLocaleString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            }) : '--'}
           </p>
         </div>
         {isLoading && (

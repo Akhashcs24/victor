@@ -26,11 +26,14 @@ export const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ onUpda
 
   const formatTime = (date: Date | null) => {
     if (!date) return '--';
-    return date.toLocaleTimeString('en-IN', { 
-      hour12: false, 
+    return date.toLocaleString('en-IN', { 
+      timeZone: 'Asia/Kolkata',
+      month: 'short',
+      day: 'numeric',
       hour: '2-digit', 
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
+      hour12: false
     });
   };
 
@@ -141,7 +144,7 @@ export const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ onUpda
               </th>
               <th className="text-center py-2 px-3 text-sm font-medium text-slate-600">Status</th>
               <th className="text-center py-2 px-3 text-sm font-medium text-slate-600">Lots</th>
-              <th className="text-center py-2 px-3 text-sm font-medium text-slate-600">Updated</th>
+              <th className="text-center py-2 px-3 text-sm font-medium text-slate-600">Last Update</th>
               <th className="text-center py-2 px-3 text-sm font-medium text-slate-600">Action</th>
             </tr>
           </thead>

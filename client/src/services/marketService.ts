@@ -6,8 +6,8 @@ export class MarketService {
   static isMarketOpen(): boolean {
     const now = new Date();
     
-    // Convert to IST (UTC+5:30)
-    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    // Convert to IST using proper timezone conversion
+    const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     
     // Check if it's a weekday (Monday = 1, Friday = 5)
     const dayOfWeek = istTime.getDay();
@@ -43,7 +43,7 @@ export class MarketService {
     timeToOpen?: string;
   } {
     const now = new Date();
-    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     const dayOfWeek = istTime.getDay();
     const hours = istTime.getHours();
     const minutes = istTime.getMinutes();
@@ -140,7 +140,7 @@ export class MarketService {
     // This is a basic implementation
     // You should maintain a proper holiday calendar
     const today = new Date();
-    const istTime = new Date(today.getTime() + (5.5 * 60 * 60 * 1000));
+    const istTime = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     
     // Add specific holiday dates here
     const holidays = [
