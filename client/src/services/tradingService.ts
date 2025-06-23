@@ -469,7 +469,15 @@ export class TradingService {
    */
   static updateTradingMode(mode: 'PAPER' | 'LIVE'): void {
     this.tradingState.tradingMode = mode;
+    this.saveState(); // Save the updated trading mode
     console.log(`🔄 Trading mode updated to: ${mode}`);
+  }
+
+  /**
+   * Get current trading mode
+   */
+  static getCurrentTradingMode(): 'PAPER' | 'LIVE' {
+    return this.tradingState.tradingMode;
   }
 
   /**

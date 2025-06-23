@@ -519,6 +519,9 @@ export class MultiSymbolMonitoringService {
       
       // Add to persistent trade log
       const { PersistentTradeLogService } = await import('./persistentTradeLogService');
+      const { TradingService } = await import('./tradingService');
+      const currentTradingMode = TradingService.getCurrentTradingMode();
+      
       await PersistentTradeLogService.addTradeLog({
         symbol: entry.symbol,
         action: 'SELL',
@@ -528,7 +531,7 @@ export class MultiSymbolMonitoringService {
         pnl,
         status: 'COMPLETED',
         remarks: `${entry.type} exit: ${reason} (P&L: ₹${pnl.toFixed(2)})`,
-        tradingMode: 'PAPER' // Default to paper trading
+        tradingMode: currentTradingMode // Use actual current trading mode
       });
       
     } catch (error) {
@@ -700,6 +703,9 @@ export class MultiSymbolMonitoringService {
       
       // Add trade log using PersistentTradeLogService directly
       const { PersistentTradeLogService } = await import('./persistentTradeLogService');
+      const { TradingService } = await import('./tradingService');
+      const currentTradingMode = TradingService.getCurrentTradingMode();
+      
       const tradeLog = await PersistentTradeLogService.addTradeLog({
         symbol: entry.symbol,
         action: 'BUY', // Use BUY for entries to match TradeLog interface
@@ -708,7 +714,7 @@ export class MultiSymbolMonitoringService {
         orderType: entry.entryMethod,
         status: 'COMPLETED',
         pnl: null, // Entry trade has no P&L yet
-        tradingMode: 'PAPER', // Default to paper trading
+        tradingMode: currentTradingMode, // Use actual current trading mode
         remarks: `HMA crossover entry - ${entry.lots} lots (${orderData.qty} qty) - Target: ₹${(price + entry.targetPoints).toFixed(2)} - SL: ₹${(price - entry.stopLossPoints).toFixed(2)} - Order Tag: ${orderData.orderTag}`
       });
 

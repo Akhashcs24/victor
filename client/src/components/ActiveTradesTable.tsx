@@ -518,25 +518,59 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
                   >
                     Log Debug Info
                   </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        console.log('🧪 TESTING: Market Data API...');
-                        const { LiveMarketDataService } = await import('../services/liveMarketDataService');
-                        const service = new LiveMarketDataService();
-                        const testSymbol = 'NSE:NIFTY50-INDEX';
-                        const result = await service.fetchMarketData(testSymbol);
-                        console.log('🧪 TEST RESULT:', result);
-                        alert(`Market Data Test: ${result ? 'SUCCESS' : 'FAILED'} - Check console for details`);
-                      } catch (error) {
-                        console.error('🧪 TEST FAILED:', error);
-                        alert('Market Data Test FAILED - Check console for error details');
-                      }
-                    }}
-                    className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs rounded"
-                  >
-                    Test Market Data API
-                  </button>
+                                      <button
+                      onClick={async () => {
+                        try {
+                          console.log('🧪 TESTING: Market Data API...');
+                          const { LiveMarketDataService } = await import('../services/liveMarketDataService');
+                          const service = new LiveMarketDataService();
+                          const testSymbol = 'NSE:NIFTY50-INDEX';
+                          const result = await service.fetchMarketData(testSymbol);
+                          console.log('🧪 TEST RESULT:', result);
+                          alert(`Market Data Test: ${result ? 'SUCCESS' : 'FAILED'} - Check console for details`);
+                        } catch (error) {
+                          console.error('🧪 TEST FAILED:', error);
+                          alert('Market Data Test FAILED - Check console for error details');
+                        }
+                      }}
+                      className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs rounded"
+                    >
+                      Test Market Data API
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          console.log('🔧 COMPREHENSIVE FIX: Restarting all services...');
+                          
+                          // 1. Force restart P&L tracking
+                          await LivePnLTrackingService.forceRestart();
+                          
+                          // 2. Force refresh monitoring
+                          await MultiSymbolMonitoringService.forceRefresh();
+                          
+                          // 3. Reload positions from trade logs
+                          await reloadPositions();
+                          
+                          // 4. Test market data API
+                          const { LiveMarketDataService } = await import('../services/liveMarketDataService');
+                          const service = new LiveMarketDataService();
+                          const testResult = await service.fetchMarketData('NSE:NIFTY50-INDEX');
+                          
+                          console.log('✅ COMPREHENSIVE FIX COMPLETE');
+                          console.log('📊 Market Data Test:', testResult ? 'SUCCESS' : 'FAILED');
+                          console.log('📊 P&L Service:', LivePnLTrackingService.getDebugInfo());
+                          console.log('📊 Monitoring Service:', MultiSymbolMonitoringService.getDebugStatus());
+                          
+                          alert(`Comprehensive Fix Complete!\nMarket Data: ${testResult ? 'Working' : 'Failed'}\nP&L Tracking: ${LivePnLTrackingService.isCurrentlyTracking() ? 'Active' : 'Inactive'}\nCheck console for details.`);
+                        } catch (error) {
+                          console.error('❌ COMPREHENSIVE FIX FAILED:', error);
+                          alert('Comprehensive Fix FAILED - Check console for details');
+                        }
+                      }}
+                      className="px-2 py-1 bg-orange-100 hover:bg-orange-200 text-orange-700 text-xs rounded font-bold"
+                    >
+                      🔧 Fix All Issues
+                    </button>
               </div>
             </div>
           </details>
