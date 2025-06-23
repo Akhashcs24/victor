@@ -84,6 +84,8 @@ export class LiveMarketDataService {
       // Join symbols with comma for the API call
       const symbolsParam = symbols.join(',');
       console.log(`📊 Fetching market data for multiple symbols: ${symbolsParam}`);
+      console.log(`📊 Using API URL: ${API_URL}/api/market-data/quotes`);
+      console.log(`📊 Auth token available: ${token ? 'Yes' : 'No'}`);
 
       const response = await fetch(`${API_URL}/api/market-data/quotes?symbols=${symbolsParam}`, {
         method: 'GET',
@@ -92,6 +94,8 @@ export class LiveMarketDataService {
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log(`📊 Market data response status: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         const errorText = await response.text();

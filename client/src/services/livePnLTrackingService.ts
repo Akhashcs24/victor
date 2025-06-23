@@ -23,16 +23,21 @@ export class LivePnLTrackingService {
    * Start tracking P&L for all open positions
    */
   static async startTracking(): Promise<void> {
-    if (this.isTracking) return;
+    if (this.isTracking) {
+      console.log('🔄 P&L tracking already running, skipping start');
+      return;
+    }
 
     console.log('🚀 Starting live P&L tracking...');
     this.isTracking = true;
 
     // Load existing positions from localStorage first
     this.loadPositionsFromStorage();
+    console.log(`📥 Loaded ${this.positions.size} positions from localStorage`);
 
     // Then load any additional positions from today's trades
     await this.loadPositionsFromTradeLogs();
+    console.log(`📊 Total positions after loading from trade logs: ${this.positions.size}`);
 
     // Start periodic updates
     this.trackingInterval = setInterval(() => {
@@ -40,9 +45,11 @@ export class LivePnLTrackingService {
     }, this.UPDATE_INTERVAL);
 
     // Initial update
+    console.log('🔄 Performing initial market data update...');
     await this.updateAllPositions();
     
     console.log(`✅ Live P&L tracking started with ${this.positions.size} positions`);
+    console.log(`🔄 Updates will occur every ${this.UPDATE_INTERVAL}ms (${this.UPDATE_INTERVAL/1000} seconds)`);
   }
 
   /**
@@ -86,6 +93,14 @@ export class LivePnLTrackingService {
       
       // Force save to ensure persistence
       this.savePositionsToStorage();
+      
+      // CRITICAL FIX: Ensure tracking is started when we add a position
+      if (!this.isTracking) {
+        console.log('🚨 CRITICAL: P&L tracking not running when adding position - starting it now!');
+        this.startTracking().catch(error => {
+          console.error('❌ Failed to start P&L tracking:', error);
+        });
+      }
     } else {
       console.warn(`⚠️ Attempted to add non-BUY or incomplete trade to P&L tracking:`, trade);
     }
@@ -208,8 +223,15 @@ export class LivePnLTrackingService {
 
     try {
       const symbols = Array.from(this.positions.values()).map(pos => pos.symbol);
+      console.log(`📊 Fetching market data for symbols: ${symbols.join(', ')}`);
+      
       const marketDataService = new LiveMarketDataService();
       const marketData = await marketDataService.fetchMultipleMarketData(symbols);
+      
+      console.log(`📊 Market data response: ${marketData.size} symbols received`);
+      if (marketData.size === 0) {
+        console.warn('⚠️ No market data received from API - this could be the streaming issue!');
+      }
 
       let updatedCount = 0;
       let failedCount = 0;

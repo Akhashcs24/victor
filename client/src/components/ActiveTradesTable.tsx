@@ -31,6 +31,12 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
         const todayTrades = await PersistentTradeLogService.getTodayTradeLogs();
         console.log(`🔍 ActiveTradesTable: Found ${todayTrades.length} total trades today`);
         
+        // CRITICAL FIX: Ensure P&L tracking is running if we have trades
+        if (todayTrades.length > 0 && !LivePnLTrackingService.isCurrentlyTracking()) {
+          console.log('🚨 CRITICAL: P&L tracking not running but we have trades - starting it now!');
+          await LivePnLTrackingService.startTracking();
+        }
+        
         // More robust filtering for active trades - DEFENSIVE APPROACH
         const activeBuyTrades = todayTrades.filter(trade => {
           // Must be a BUY trade that's completed
@@ -501,17 +507,36 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
                 >
                   Reload Positions
                 </button>
-                <button
-                  onClick={() => {
-                    console.log('📊 DEBUG INFO:');
-                    console.log('P&L Service:', LivePnLTrackingService.getDebugInfo());
-                    console.log('Monitoring Service:', MultiSymbolMonitoringService.getDebugStatus());
-                    alert('Debug info logged to console!');
-                  }}
-                  className="px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs rounded"
-                >
-                  Log Debug Info
-                </button>
+                                  <button
+                    onClick={() => {
+                      console.log('📊 DEBUG INFO:');
+                      console.log('P&L Service:', LivePnLTrackingService.getDebugInfo());
+                      console.log('Monitoring Service:', MultiSymbolMonitoringService.getDebugStatus());
+                      alert('Debug info logged to console!');
+                    }}
+                    className="px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs rounded"
+                  >
+                    Log Debug Info
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        console.log('🧪 TESTING: Market Data API...');
+                        const { LiveMarketDataService } = await import('../services/liveMarketDataService');
+                        const service = new LiveMarketDataService();
+                        const testSymbol = 'NSE:NIFTY50-INDEX';
+                        const result = await service.fetchMarketData(testSymbol);
+                        console.log('🧪 TEST RESULT:', result);
+                        alert(`Market Data Test: ${result ? 'SUCCESS' : 'FAILED'} - Check console for details`);
+                      } catch (error) {
+                        console.error('🧪 TEST FAILED:', error);
+                        alert('Market Data Test FAILED - Check console for error details');
+                      }
+                    }}
+                    className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs rounded"
+                  >
+                    Test Market Data API
+                  </button>
               </div>
             </div>
           </details>
