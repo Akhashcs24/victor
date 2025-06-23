@@ -527,22 +527,24 @@ export class MultiSymbolMonitoringService {
 
     const priceIsAboveHMA = currentPrice > entry.hmaValue;
 
-    // We need to track the previous price state to detect actual crossover
-    // If this is the first time we're checking, store the current state
-    if (entry.lastUpdate === null) {
-      // First time checking - just record the current state, don't trigger
+    // Initialize previousPriceAboveHMA if not set
+    if ((entry as any).previousPriceAboveHMA === null || (entry as any).previousPriceAboveHMA === undefined) {
+      (entry as any).previousPriceAboveHMA = priceIsAboveHMA;
       console.log(`📊 ${entry.symbol} (${entry.type}) Initial state: Price ${currentPrice} ${priceIsAboveHMA ? 'above' : 'below'} HMA ${entry.hmaValue}`);
-      return;
+      return; // Don't trigger on first check, just record state
     }
 
     // Get the previous state from our stored data
     const previousPriceWasAboveHMA = (entry as any).previousPriceAboveHMA;
     
-    // Store current state for next iteration
-    (entry as any).previousPriceAboveHMA = priceIsAboveHMA;
+    // Only proceed if we have a valid previous state
+    if (previousPriceWasAboveHMA === null || previousPriceWasAboveHMA === undefined) {
+      (entry as any).previousPriceAboveHMA = priceIsAboveHMA;
+      return;
+    }
 
     // Detect actual crossover: price was below HMA and is now above HMA
-    if (!previousPriceWasAboveHMA && priceIsAboveHMA) {
+    if (previousPriceWasAboveHMA === false && priceIsAboveHMA === true) {
       // This is an actual crossover!
       if (!entry.crossoverSignalTime) {
         entry.crossoverSignalTime = new Date();
@@ -556,7 +558,7 @@ export class MultiSymbolMonitoringService {
           entry.crossoverSignalTime = null;
         }
       }
-    } else if (previousPriceWasAboveHMA && !priceIsAboveHMA) {
+    } else if (previousPriceWasAboveHMA === true && priceIsAboveHMA === false) {
       // Price fell back below HMA - cancel any pending crossover
       if (entry.crossoverSignalTime) {
         console.log(`📉 ${entry.symbol} (${entry.type}) Price fell below HMA. Cancelling crossover signal.`);
@@ -571,7 +573,12 @@ export class MultiSymbolMonitoringService {
         entry.crossoverSignalTime = null;
       }
     }
-    // If price was already above HMA and is still above HMA (no crossover), do nothing
+    
+    // Update the previous state for next iteration
+    (entry as any).previousPriceAboveHMA = priceIsAboveHMA;
+    
+    // Log current state for debugging
+    console.log(`📈 ${entry.symbol} (${entry.type}) State: Price ${currentPrice} ${priceIsAboveHMA ? 'above' : 'below'} HMA ${entry.hmaValue} | Previous: ${previousPriceWasAboveHMA ? 'above' : 'below'} | Status: ${entry.triggerStatus}`);
   }
 
   /**
@@ -698,8 +705,11 @@ export class MultiSymbolMonitoringService {
       const loadedSymbols = parsed.symbols.map((entry: any) => ({
         ...entry,
         addedAt: new Date(entry.addedAt),
-        lastUpdate: entry.lastUpdate ? new Date(entry.lastUpdate) : null,
-        crossoverSignalTime: entry.crossoverSignalTime ? new Date(entry.crossoverSignalTime) : null
+        // Reset lastUpdate to null to force fresh timestamps
+        lastUpdate: null,
+        crossoverSignalTime: entry.crossoverSignalTime ? new Date(entry.crossoverSignalTime) : null,
+        // Reset previous price state to force fresh crossover detection
+        previousPriceAboveHMA: null
       }));
       
       // Merge with existing symbols (keeping index symbols)
@@ -708,7 +718,7 @@ export class MultiSymbolMonitoringService {
         ...loadedSymbols
       ];
 
-      console.log(`📥 Loaded ${loadedSymbols.length} monitored symbols from localStorage`);
+      console.log(`📥 Loaded ${loadedSymbols.length} monitored symbols from localStorage (timestamps reset for fresh data)`);
     } catch (error) {
       console.error('❌ Error loading monitored symbols:', error);
     }
@@ -728,6 +738,7 @@ export class MultiSymbolMonitoringService {
     
     // Remove from localStorage completely instead of saving empty array
     localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem('victor_monitoring_active');
     
     // Also try to stop TradingService monitoring if possible
     try {
@@ -740,6 +751,30 @@ export class MultiSymbolMonitoringService {
     } catch (error) {
       console.log('ℹ️ TradingService not available or already stopped');
     }
+  }
+
+  /**
+   * Debug method to force clear localStorage and reset everything
+   */
+  static debugClearAll(): void {
+    console.log('🧹 DEBUG: Force clearing all localStorage and monitoring');
+    
+    // Stop monitoring
+    this.stopMonitoring();
+    
+    // Clear arrays
+    this.monitoredSymbols = [];
+    
+    // Clear all related localStorage items
+    localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem('victor_monitoring_active');
+    localStorage.removeItem('victor_trade_logs');
+    localStorage.removeItem('victor_trading_state');
+    
+    // Reset batch index
+    this.currentBatchIndex = 0;
+    
+    console.log('✅ DEBUG: All data cleared and reset');
   }
 
   /**
