@@ -17,7 +17,8 @@ export class MultiSymbolMonitoringService {
   private static apiCallCount: number = 0;
   private static readonly MIN_INTERVAL_BETWEEN_CALLS = 150; // 150ms = ~6.7 calls/second (buffer for safety)
   private static readonly RESET_COUNT_INTERVAL = 60000; // Reset count every minute
-  private static readonly MONITORING_INTERVAL = 5000; // 5 seconds between market data updates
+  private static readonly MONITORING_INTERVAL = 2000; // 2 seconds between market data updates
+  private static currentBatchIndex = 0; // Track which batch of symbols to fetch next
   
   // Index symbols that are allowed to be monitored
   private static readonly ALLOWED_INDEX_SYMBOLS = [
@@ -183,13 +184,16 @@ export class MultiSymbolMonitoringService {
     console.log(`🚀 Starting monitoring for ${this.monitoredSymbols.length} symbols...`);
     this.isMonitoring = true;
     
+    // Reset batch index when starting monitoring
+    this.currentBatchIndex = 0;
+    
     // Set flag in localStorage that monitoring is active
     localStorage.setItem('victor_monitoring_active', 'true');
 
     // Initial fetch
     this.monitorAllSymbols();
 
-    // Set up interval (every 5 seconds)
+    // Set up interval (every 2 seconds)
     this.monitoringInterval = setInterval(() => {
       this.monitorAllSymbols();
     }, this.MONITORING_INTERVAL);
@@ -237,24 +241,29 @@ export class MultiSymbolMonitoringService {
         
       if (symbolsToMonitor.length === 0) return;
       
-      // If we have many symbols, we need to batch them to respect rate limits
-      const batchSize = 5; // Process 5 symbols at a time
+      // If we have many symbols, alternate between batches to avoid hitting rate limits
+      const batchSize = 2; // Process 2 symbols at a time
       const batches = [];
       
       for (let i = 0; i < symbolsToMonitor.length; i += batchSize) {
         batches.push(symbolsToMonitor.slice(i, i + batchSize));
       }
 
-      // Process each batch with delay
-      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-        const batch = batches[batchIndex];
+      // If we have multiple batches, alternate between them
+      if (batches.length > 1) {
+        // Only process one batch per interval to avoid rate limiting
+        const batchToProcess = batches[this.currentBatchIndex % batches.length];
+        await this.processBatch(batchToProcess);
         
-        // Add delay between batches (except first)
-        if (batchIndex > 0) {
-          await this.rateLimitedDelay();
-        }
+        // Move to next batch for next interval
+        const nextBatchIndex = (this.currentBatchIndex + 1) % batches.length;
         
-        await this.processBatch(batch);
+        console.log(`📊 Processed batch ${this.currentBatchIndex + 1}/${batches.length} with ${batchToProcess.length} symbols (${batchToProcess.map(s => s.symbol.split(':')[1]?.slice(-2) || s.symbol).join(', ')}). Next: batch ${nextBatchIndex + 1}`);
+        
+        this.currentBatchIndex = nextBatchIndex;
+      } else if (batches.length === 1) {
+        // If only one batch, process it normally
+        await this.processBatch(batches[0]);
       }
 
       // Save updated state

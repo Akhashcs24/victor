@@ -28,6 +28,7 @@ export class MarketService {
   
   /**
    * Get the appropriate data fetch interval based on market status
+   * Index cards update every 5 seconds during market hours
    */
   static getDataFetchInterval(): number {
     return this.isMarketOpen() ? 5000 : 0; // 5 seconds if open, 0 if closed (no interval)

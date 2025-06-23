@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MultiSymbolMonitoringService } from '../services/multiSymbolMonitoringService';
 import { OrderService } from '../services/orderService';
 import { Eye, EyeOff, TrendingUp, Clock, Plus, Target, Shield } from 'lucide-react';
@@ -8,7 +8,17 @@ interface MonitoringDashboardProps {
 }
 
 export const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ onUpdate }) => {
+  const [, forceUpdate] = useState({});
   const monitoredSymbols = MultiSymbolMonitoringService.getMonitoredSymbols();
+
+  // Force re-render every 2 seconds to show updated data
+  useEffect(() => {
+    const interval = setInterval(() => {
+      forceUpdate({}); // Trigger re-render to get fresh data
+    }, 2000); // Update every 2 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStopMonitoring = (symbolId: string) => {
     MultiSymbolMonitoringService.removeSymbolFromMonitoring(symbolId);
