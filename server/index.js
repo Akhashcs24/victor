@@ -36,6 +36,7 @@ app.use(function(req, res, next) {
     'https://client-q5s7dtxpi-akhashcs24s-projects.vercel.app',
     'https://client-dkydevmtr-akhashcs24s-projects.vercel.app',
     'https://client-gewfgz93u-akhashcs24s-projects.vercel.app',
+    'https://client-awsd7qusd-akhashcs24s-projects.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001'
   ];
