@@ -296,6 +296,8 @@ export class AuthService {
     // Clear from localStorage
     try {
       localStorage.removeItem('victor_auth');
+      localStorage.removeItem('user_profile');
+      localStorage.removeItem('last_token_validation');
       console.log('🗑️ Auth data cleared from storage');
     } catch (error) {
       console.error('❌ Error clearing storage:', error);
@@ -405,26 +407,82 @@ export class AuthService {
         };
       }
 
-      // Validate the token
-      const validation = await this.validateToken();
-      
-      if (validation.success) {
-        return {
-          isAuthenticated: true,
-          requiresFreshAuth: false,
-          message: 'Authentication is valid'
-        };
-      } else {
-        // Token is invalid, clear it
+      // Check if token is expired based on our local timestamp
+      if (this.isTokenExpired()) {
+        console.log('🔄 Token expired based on local timestamp');
         this.logout();
         return {
           isAuthenticated: false,
           requiresFreshAuth: false,
-          message: validation.message
+          message: 'Token has expired'
+        };
+      }
+
+      // For refresh scenarios, trust the stored token without making API calls
+      // Only validate token via API if it's been more than 1 hour since last validation
+      const lastValidation = localStorage.getItem('last_token_validation');
+      const now = Date.now();
+      const oneHour = 60 * 60 * 1000;
+      
+      if (lastValidation && (now - parseInt(lastValidation)) < oneHour) {
+        console.log('✅ Token recently validated, skipping API check');
+        return {
+          isAuthenticated: true,
+          requiresFreshAuth: false,
+          message: 'Authentication is valid (recently checked)'
+        };
+      }
+
+      // Only validate via API occasionally
+      try {
+        const validation = await this.validateToken();
+        
+        if (validation.success) {
+          localStorage.setItem('last_token_validation', now.toString());
+          return {
+            isAuthenticated: true,
+            requiresFreshAuth: false,
+            message: 'Authentication is valid'
+          };
+        } else {
+          // Only logout if we get a definitive 401 (unauthorized)
+          if (validation.message.includes('401') || validation.message.includes('invalid')) {
+            console.log('❌ Token definitely invalid, logging out');
+            this.logout();
+            return {
+              isAuthenticated: false,
+              requiresFreshAuth: false,
+              message: validation.message
+            };
+          } else {
+            // For other errors (network, server issues), keep the user logged in
+            console.log('⚠️ Token validation failed but keeping user logged in:', validation.message);
+            return {
+              isAuthenticated: true,
+              requiresFreshAuth: false,
+              message: 'Authentication assumed valid (validation failed due to network/server issues)'
+            };
+          }
+        }
+      } catch (error) {
+        // Network or other errors - keep user logged in
+        console.log('⚠️ Token validation error, keeping user logged in:', error);
+        return {
+          isAuthenticated: true,
+          requiresFreshAuth: false,
+          message: 'Authentication assumed valid (network error during validation)'
         };
       }
     } catch (error) {
       console.error('❌ Error checking authentication status:', error);
+      // If we have tokens but error checking, assume valid to prevent unnecessary logouts
+      if (this.accessToken && this.appId && !this.isTokenExpired()) {
+        return {
+          isAuthenticated: true,
+          requiresFreshAuth: false,
+          message: 'Authentication assumed valid (error during status check)'
+        };
+      }
       return {
         isAuthenticated: false,
         requiresFreshAuth: false,

@@ -1,76 +1,42 @@
-# Victor 3.0
+# Victor Trading App - Backend Server
 
-A trading application for automated strategy monitoring and execution.
-
-## Project Structure
-
-- **client**: Frontend React application built with Vite, TypeScript, and Tailwind CSS
-- **server**: Backend Node.js server providing API services
-- **backup**: Reference materials and previous versions
+This is the backend server for the Victor Trading App, a trading application that integrates with the Fyers API.
 
 ## Features
 
 - Authentication with Fyers API
-- Real-time market data monitoring
-- Strategy implementation with HMA (Hull Moving Average)
-- Trade execution and logging
-- Multiple symbol monitoring
-
-## Setup
-
-### Prerequisites
-
-- Node.js (v14+)
-- npm or yarn
-
-### Client Setup
-
-```bash
-cd client
-npm install
-npm run dev
-```
-
-### Server Setup
-
-```bash
-cd server
-npm install
-npm start
-```
+- Market data fetching
+- Trading state management
+- Trade logging
+- HMA (Hull Moving Average) calculation service
 
 ## Environment Variables
 
-### Backend
+The following environment variables are required:
 
-- `PORT` - Port to run the server on (default: 5000)
-- `CLIENT_URL` - URL of the frontend client (for CORS)
-- `FYERS_APP_ID` - Your Fyers API app ID
-- `FYERS_APP_SECRET` - Your Fyers API app secret
-
-### Frontend
-
-- `VITE_API_URL` - URL of the backend API server
-
-## Development
-
-The application uses:
-- React for the frontend UI
-- TypeScript for type safety
-- Tailwind CSS for styling
-- Node.js for the backend
-- Fyers API for market data and trading
+- `NODE_ENV`: Set to `production` for production deployment
+- `CLIENT_URL`: URL of the client application for CORS
+- `PORT`: (Optional) Port to run the server on, defaults to 5000
 
 ## Deployment
 
-### Backend (Server)
+This server is designed to be deployed on Render.com. The `render.yaml` file contains the configuration for deployment.
 
-The backend can be deployed to platforms like Render or Railway. See the [server README](./server/README.md) for detailed instructions.
+## Local Development
 
-### Frontend (Client)
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the server: `npm start`
+4. For development with hot reload: `npm run dev`
 
-The frontend can be deployed to platforms like Vercel or Netlify. See the [client README](./client/README.md) for detailed instructions.
+## API Endpoints
 
-## License
-
-[MIT](LICENSE)
+- `/api/health`: Health check endpoint
+- `/api/login`: Generate Fyers auth URL
+- `/api/fyers-callback`: Handle Fyers auth callback
+- `/api/profile`: Get user profile
+- `/api/market-data/historical`: Get historical market data
+- `/api/market-data/quotes`: Get market quotes
+- `/api/market-data/depth`: Get market depth
+- `/api/trade-log`: Trade logging endpoints
+- `/api/trading-state`: Trading state endpoints

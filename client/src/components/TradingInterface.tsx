@@ -239,34 +239,34 @@ export const TradingInterface: React.FC<TradingInterfaceProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">CE Symbol</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">CE Symbol</label>
             <input
               type="text"
               value={contractInputs.ceSymbol}
               onChange={(e) => setContractInputs(prev => ({ ...prev, ceSymbol: e.target.value }))}
-              className="input-field"
-              placeholder="e.g., NSE:NIFTY24500CE"
+              className="input-field text-sm"
+              placeholder="NSE:NIFTY24500CE"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">PE Symbol</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">PE Symbol</label>
             <input
               type="text"
               value={contractInputs.peSymbol}
               onChange={(e) => setContractInputs(prev => ({ ...prev, peSymbol: e.target.value }))}
-              className="input-field"
-              placeholder="e.g., NSE:NIFTY24500PE"
+              className="input-field text-sm"
+              placeholder="NSE:NIFTY24500PE"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               CE Lots 🔥
-              <span className="text-xs text-gray-500 ml-1">
+              <span className="text-xs text-gray-500 block">
                 ({SymbolConfigService.calculateQuantityFromLots(
                   Object.keys(INDEX_CONFIGS).find(key => INDEX_CONFIGS[key].name === contractInputs.index.name) || 'NIFTY', 
                   contractInputs.ceLots
@@ -277,14 +277,14 @@ export const TradingInterface: React.FC<TradingInterfaceProps> = ({
               type="number"
               value={contractInputs.ceLots}
               onChange={(e) => setContractInputs(prev => ({ ...prev, ceLots: parseInt(e.target.value) || 1 }))}
-              className="input-field"
+              className="input-field text-sm"
               min="1"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               PE Lots 🔥
-              <span className="text-xs text-gray-500 ml-1">
+              <span className="text-xs text-gray-500 block">
                 ({SymbolConfigService.calculateQuantityFromLots(
                   Object.keys(INDEX_CONFIGS).find(key => INDEX_CONFIGS[key].name === contractInputs.index.name) || 'NIFTY', 
                   contractInputs.peLots
@@ -295,16 +295,16 @@ export const TradingInterface: React.FC<TradingInterfaceProps> = ({
               type="number"
               value={contractInputs.peLots}
               onChange={(e) => setContractInputs(prev => ({ ...prev, peLots: parseInt(e.target.value) || 1 }))}
-              className="input-field"
+              className="input-field text-sm"
               min="1"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Entry Method</label>
+          <div className="col-span-2 sm:col-span-1">
+            <label className="block text-xs font-medium text-gray-700 mb-1">Entry Method</label>
             <select
               value={contractInputs.entryMethod}
               onChange={(e) => setContractInputs(prev => ({ ...prev, entryMethod: e.target.value as 'MARKET' | 'LIMIT' }))}
-              className="input-field"
+              className="input-field text-sm w-full"
             >
               <option value="MARKET">Market</option>
               <option value="LIMIT">Limit</option>
