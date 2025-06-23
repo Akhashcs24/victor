@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { AuthPanel } from './components/AuthPanel';
 import { MonitoringDashboard } from './components/MonitoringDashboard';
