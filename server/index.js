@@ -1,5 +1,6 @@
 // Basic Express server for Victor trading app backend
 // This file starts the backend server and sets up basic middleware
+// Updated: June 23, 2025 - Added CORS support for new frontend deployment
 
 require('dotenv').config();
 const express = require('express');
