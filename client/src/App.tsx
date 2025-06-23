@@ -214,7 +214,7 @@ function App() {
     const indexDefaults = {
       'NIFTY': { targetPoints: 40, stopLossPoints: 15 },
       'BANKNIFTY': { targetPoints: 60, stopLossPoints: 20 },
-      'SENSEX': { targetPoints: 600, stopLossPoints: 30 }
+      'SENSEX': { targetPoints: 100, stopLossPoints: 30 }
     };
     
     const defaults = indexDefaults[index as keyof typeof indexDefaults];
@@ -855,7 +855,7 @@ function App() {
                           </select>
                           <input 
                             type="number" 
-                            placeholder={headerStatus.selectedIndex === 'NIFTY' ? '40' : headerStatus.selectedIndex === 'BANKNIFTY' ? '60' : '600'}
+                            placeholder={headerStatus.selectedIndex === 'NIFTY' ? '40' : headerStatus.selectedIndex === 'BANKNIFTY' ? '60' : '100'}
                             value={tradingState.contractInputs.targetPoints}
                             onChange={(e) => handleContractInputChange('targetPoints', parseInt(e.target.value) || 0)}
                             className="w-2/3 px-4 py-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-slate-400 transition-colors text-slate-900 placeholder-slate-500"
@@ -922,10 +922,10 @@ function App() {
                         <span className="text-sm text-blue-800 font-medium">Auto-fill enabled</span>
                       </div>
                       <p className="text-xs text-blue-700 mt-1">
-                        Target/SL values are automatically set based on your index selection:
-                        <span className="font-mono ml-1">
-                          NIFTY (40/15) • BANKNIFTY (60/20) • SENSEX (600/30)
-                        </span>
+                                                 Target/SL values are automatically set based on your index selection:
+                         <span className="font-mono ml-1">
+                           NIFTY (40/15) • BANKNIFTY (60/20) • SENSEX (100/30)
+                         </span>
                       </p>
                     </div>
 

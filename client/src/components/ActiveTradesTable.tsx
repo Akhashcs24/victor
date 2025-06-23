@@ -30,7 +30,7 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
         const todayTrades = await PersistentTradeLogService.getTodayTradeLogs();
         console.log(`🔍 ActiveTradesTable: Found ${todayTrades.length} total trades today`);
         
-        // More robust filtering for active trades
+        // More robust filtering for active trades - DEFENSIVE APPROACH
         const activeBuyTrades = todayTrades.filter(trade => {
           // Must be a BUY trade that's completed
           if (trade.action !== 'BUY' || trade.status !== 'COMPLETED') {
@@ -39,51 +39,70 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
           
           console.log(`🔍 Checking BUY trade: ${trade.symbol} at ${trade.price} (ID: ${trade.id})`);
           
-          // Check if there's a corresponding SELL trade for the same symbol
-          // that happened AFTER this BUY trade and has the same or more quantity
-          const correspondingSellTrades = todayTrades.filter(sellTrade => 
-            sellTrade.action === 'SELL' && 
-            sellTrade.symbol === trade.symbol &&
-            sellTrade.timestamp > trade.timestamp &&
-            sellTrade.status === 'COMPLETED'
-          );
+          // NEW APPROACH: Only hide a trade if there's a DEFINITIVE matching SELL trade
+          // with EXACT same symbol, LATER timestamp, and EXACT or MORE quantity
+          const matchingSellTrades = todayTrades.filter(sellTrade => {
+            const isExactMatch = (
+              sellTrade.action === 'SELL' && 
+              sellTrade.symbol === trade.symbol &&
+              sellTrade.timestamp > trade.timestamp &&
+              sellTrade.status === 'COMPLETED' &&
+              sellTrade.quantity >= trade.quantity // Must be exact or more quantity
+            );
+            
+            if (isExactMatch) {
+              console.log(`🎯 Found EXACT matching SELL for ${trade.symbol}: BUY ${trade.quantity} vs SELL ${sellTrade.quantity}`);
+            }
+            
+            return isExactMatch;
+          });
           
-          console.log(`🔍 Found ${correspondingSellTrades.length} corresponding SELL trades for ${trade.symbol}`);
+          // Only hide if there's a definitive matching sell
+          const shouldHide = matchingSellTrades.length > 0;
+          const shouldShow = !shouldHide;
           
-          // Calculate total sold quantity for this symbol after this buy
-          const totalSoldQuantity = correspondingSellTrades.reduce((sum, sellTrade) => sum + sellTrade.quantity, 0);
+          console.log(`🔍 Trade ${trade.symbol}: BUY=${trade.quantity}, Matching SELLs=${matchingSellTrades.length}, SHOW=${shouldShow}`);
           
-          // This position is still active if sold quantity is less than bought quantity
-          const isActive = totalSoldQuantity < trade.quantity;
-          console.log(`🔍 Trade ${trade.symbol}: bought=${trade.quantity}, sold=${totalSoldQuantity}, active=${isActive}`);
-          
-          return isActive;
+          return shouldShow;
         });
         
         console.log(`🔍 ActiveTradesTable: Filtered to ${activeBuyTrades.length} active trades`);
-        setActiveTrades(activeBuyTrades);
+        console.log(`📋 Active trades:`, activeBuyTrades.map(t => `${t.symbol} @ ₹${t.price}`));
+        
+        // DEFENSIVE: Only update if we have trades OR if this is the first load
+        if (activeBuyTrades.length > 0 || activeTrades.length === 0) {
+          setActiveTrades(activeBuyTrades);
+        } else {
+          console.log(`⚠️ No active trades found, keeping previous ${activeTrades.length} trades visible`);
+        }
         
         // Get live positions - don't clear if fetch fails
         try {
           const positions = LivePnLTrackingService.getAllPositions();
           console.log(`🔍 ActiveTradesTable: Found ${positions.length} live positions`);
-          setLivePositions(positions);
+          
+          // DEFENSIVE: Only update positions if we get valid data
+          if (positions.length > 0 || livePositions.length === 0) {
+            setLivePositions(positions);
+          } else {
+            console.log(`⚠️ No live positions found, keeping previous ${livePositions.length} positions`);
+          }
         } catch (positionError) {
-          console.warn('Could not update live positions:', positionError);
+          console.warn('Could not update live positions, keeping previous data:', positionError);
           // Keep previous positions if fetch fails
         }
         
       } catch (error) {
-        console.error('Error updating active trades:', error);
+        console.error('❌ Error updating active trades, keeping previous data:', error);
         // Don't clear active trades on error, keep showing previous data
       }
     };
 
     updateData(); // Initial update
-    const interval = setInterval(updateData, 2000); // Update every 2 seconds
+    const interval = setInterval(updateData, 5000); // Reduced frequency to 5 seconds to reduce API load
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTrades.length, livePositions.length]); // Add dependencies to prevent unnecessary updates
 
   // Get live data for a trade
   const getLiveData = (tradeId: string) => {
@@ -213,6 +232,53 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
       onUpdate?.();
     } catch (error) {
       console.error('Error executing manual exit:', error);
+    }
+  };
+
+  // Debug function to log detailed trade information
+  const debugTrades = async () => {
+    try {
+      const todayTrades = await PersistentTradeLogService.getTodayTradeLogs();
+      console.log('🐛 DEBUG: All trades today:', todayTrades.length);
+      
+      const buyTrades = todayTrades.filter(t => t.action === 'BUY' && t.status === 'COMPLETED');
+      const sellTrades = todayTrades.filter(t => t.action === 'SELL' && t.status === 'COMPLETED');
+      
+      console.log('🐛 DEBUG: BUY trades:', buyTrades.length);
+      console.log('🐛 DEBUG: SELL trades:', sellTrades.length);
+      
+      buyTrades.forEach(buyTrade => {
+        const matchingSells = sellTrades.filter(sellTrade => 
+          sellTrade.symbol === buyTrade.symbol && 
+          sellTrade.timestamp > buyTrade.timestamp
+        );
+        console.log(`🐛 DEBUG: ${buyTrade.symbol} BUY @ ₹${buyTrade.price} has ${matchingSells.length} matching SELLs`);
+      });
+      
+      const livePositions = LivePnLTrackingService.getAllPositions();
+      console.log('🐛 DEBUG: Live positions:', livePositions.length);
+      livePositions.forEach(pos => {
+        console.log(`🐛 DEBUG: Position ${pos.symbol} @ ₹${pos.entryPrice}, current: ₹${pos.currentPrice}, P&L: ₹${pos.livePnL}`);
+      });
+      
+    } catch (error) {
+      console.error('🐛 DEBUG: Error:', error);
+    }
+  };
+
+  // Reload positions function
+  const reloadPositions = async () => {
+    try {
+      console.log('🔄 Manually reloading positions...');
+      await LivePnLTrackingService.debugReloadPositions();
+      
+      // Force update the component
+      const positions = LivePnLTrackingService.getAllPositions();
+      setLivePositions(positions);
+      
+      console.log('✅ Positions reloaded successfully');
+    } catch (error) {
+      console.error('❌ Error reloading positions:', error);
     }
   };
 
@@ -387,7 +453,7 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
           </div>
         </div>
         <div className="text-xs text-slate-500">
-          Updates every 2 seconds • Live P&L tracking
+          Updates every 5 seconds • Live P&L tracking
         </div>
       </div>
 

@@ -199,38 +199,60 @@ export class LivePnLTrackingService {
    * Update P&L for all tracked positions
    */
   private static async updateAllPositions(): Promise<void> {
-    if (this.positions.size === 0) return;
+    if (this.positions.size === 0) {
+      console.log('📊 No positions to update');
+      return;
+    }
+
+    console.log(`📊 Updating P&L for ${this.positions.size} positions...`);
 
     try {
       const symbols = Array.from(this.positions.values()).map(pos => pos.symbol);
       const marketDataService = new LiveMarketDataService();
-      
-      // Fetch market data for all symbols
-      const marketDataMap = await marketDataService.fetchMultipleMarketData(symbols);
+      const marketData = await marketDataService.fetchMultipleMarketData(symbols);
 
-      // Update each position and check for auto-exit conditions
+      let updatedCount = 0;
+      let failedCount = 0;
+
       for (const [tradeId, position] of this.positions.entries()) {
-        const marketData = marketDataMap.get(position.symbol);
-        
-        if (marketData) {
-          position.currentPrice = marketData.ltp;
-          position.livePnL = (marketData.ltp - position.entryPrice) * position.quantity;
-          position.lastUpdate = new Date();
-
-          // Check for auto-exit conditions (target/SL hit)
-          await this.checkAutoExit(tradeId, position, marketData.ltp);
-        } else {
-          // Don't remove position if data fetch fails, just log the issue
-          console.warn(`⚠️ Could not fetch market data for ${position.symbol}, keeping position in tracking`);
-          // Keep the previous price and P&L values, just update the timestamp to show it's stale
-          // Don't update lastUpdate so we can show stale data indicator
+        try {
+          const currentData = marketData.get(position.symbol);
+          
+          if (currentData && currentData.ltp) {
+            const previousPrice = position.currentPrice;
+            position.currentPrice = currentData.ltp;
+            position.livePnL = (currentData.ltp - position.entryPrice) * position.quantity;
+            position.lastUpdate = new Date();
+            
+            // Only log if price changed significantly or it's been a while
+            if (!previousPrice || Math.abs(currentData.ltp - previousPrice) > 0.01) {
+              console.log(`📈 Updated ${position.symbol}: ₹${currentData.ltp} (P&L: ₹${position.livePnL?.toFixed(2)})`);
+            }
+            
+            updatedCount++;
+            
+            // Check for auto-exit conditions
+            await this.checkAutoExit(tradeId, position, currentData.ltp);
+          } else {
+            console.warn(`⚠️ No market data available for ${position.symbol}, keeping previous data`);
+            failedCount++;
+            // DON'T remove the position if market data fails - keep it for next update
+          }
+        } catch (positionError) {
+          console.error(`❌ Error updating position ${position.symbol}:`, positionError);
+          failedCount++;
+          // DON'T remove the position on individual errors - keep it for next update
         }
       }
 
-      console.log(`📊 Updated P&L for ${this.positions.size} positions`);
+      console.log(`📊 P&L Update complete: ${updatedCount} updated, ${failedCount} failed, ${this.positions.size} total positions`);
+      
+      // Save to localStorage after each update to ensure persistence
+      this.savePositionsToStorage();
+      
     } catch (error) {
-      console.error('❌ Error updating position P&L:', error);
-      // Don't clear positions on error, just log it
+      console.error('❌ Error updating positions (keeping all positions for next update):', error);
+      // DON'T clear positions on error - they should persist until successfully updated or manually removed
     }
   }
 
