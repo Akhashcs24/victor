@@ -693,15 +693,10 @@ export class MultiSymbolMonitoringService {
       // TODO: In live trading, this is where you would call the Fyers API:
       // const response = await fyersAPI.placeOrder(orderData);
       
-      // Update entry status
+      // Update entry status FIRST
       entry.triggerStatus = 'ENTERED';
       entry.entryPrice = price;
-      
-      // Remove from monitoring after execution (move to trade log)
-      setTimeout(() => {
-        this.removeSymbolFromMonitoring(entry.id);
-        console.log(`🔄 ${entry.symbol} moved from monitoring to trade log`);
-      }, 1000); // Small delay to ensure trade log is updated first
+      this.saveMonitoredSymbols(); // Save immediately
       
       // Add trade log using PersistentTradeLogService directly
       const { PersistentTradeLogService } = await import('./persistentTradeLogService');
@@ -717,7 +712,9 @@ export class MultiSymbolMonitoringService {
         remarks: `HMA crossover entry - ${entry.lots} lots (${orderData.qty} qty) - Target: ₹${(price + entry.targetPoints).toFixed(2)} - SL: ₹${(price - entry.stopLossPoints).toFixed(2)} - Order Tag: ${orderData.orderTag}`
       });
 
-      // Start live P&L tracking for this position
+      console.log(`✅ Trade log created with ID: ${tradeLog.id} for ${entry.symbol}`);
+
+      // Start live P&L tracking for this position IMMEDIATELY
       const { LivePnLTrackingService } = await import('./livePnLTrackingService');
       LivePnLTrackingService.addPosition(tradeLog);
       
@@ -726,10 +723,19 @@ export class MultiSymbolMonitoringService {
         await LivePnLTrackingService.startTracking();
       }
       
+      console.log(`✅ Live P&L tracking started for ${entry.symbol} with trade ID: ${tradeLog.id}`);
+      
+      // Remove from monitoring AFTER everything is set up (with a longer delay)
+      setTimeout(() => {
+        this.removeSymbolFromMonitoring(entry.id);
+        console.log(`🔄 ${entry.symbol} removed from monitoring after successful trade execution`);
+      }, 3000); // Increased delay to 3 seconds to ensure everything is processed
+      
       console.log(`✅ ${entry.symbol} (${entry.type}) entry executed: ${entry.lots} lots = ${orderData.qty} qty at ₹${price}`);
       
     } catch (error) {
       console.error(`❌ Error executing entry for ${entry.symbol}:`, error);
+      // Don't remove from monitoring if there was an error
     }
   }
 

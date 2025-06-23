@@ -28,7 +28,10 @@ export class LivePnLTrackingService {
     console.log('🚀 Starting live P&L tracking...');
     this.isTracking = true;
 
-    // Load existing positions from today's trades
+    // Load existing positions from localStorage first
+    this.loadPositionsFromStorage();
+
+    // Then load any additional positions from today's trades
     await this.loadPositionsFromTradeLogs();
 
     // Start periodic updates
@@ -38,6 +41,8 @@ export class LivePnLTrackingService {
 
     // Initial update
     await this.updateAllPositions();
+    
+    console.log(`✅ Live P&L tracking started with ${this.positions.size} positions`);
   }
 
   /**
@@ -76,6 +81,55 @@ export class LivePnLTrackingService {
 
       this.positions.set(trade.id, position);
       console.log(`📈 Added position to P&L tracking: ${trade.symbol} @ ₹${trade.price}`);
+      console.log(`📊 Current positions being tracked: ${this.positions.size}`);
+      console.log(`🔍 Position details:`, position);
+      
+      // Force save to ensure persistence
+      this.savePositionsToStorage();
+    } else {
+      console.warn(`⚠️ Attempted to add non-BUY or incomplete trade to P&L tracking:`, trade);
+    }
+  }
+
+  /**
+   * Save positions to localStorage for persistence
+   */
+  private static savePositionsToStorage(): void {
+    try {
+      const positionsArray = Array.from(this.positions.entries()).map(([id, position]) => ({
+        id,
+        ...position
+      }));
+      localStorage.setItem('victor_live_positions', JSON.stringify(positionsArray));
+      console.log(`💾 Saved ${positionsArray.length} positions to localStorage`);
+    } catch (error) {
+      console.error('❌ Error saving positions to localStorage:', error);
+    }
+  }
+
+  /**
+   * Load positions from localStorage
+   */
+  private static loadPositionsFromStorage(): void {
+    try {
+      const stored = localStorage.getItem('victor_live_positions');
+      if (stored) {
+        const positionsArray = JSON.parse(stored);
+        this.positions.clear();
+        
+        positionsArray.forEach((item: any) => {
+          const { id, ...position } = item;
+          // Restore Date objects
+          if (position.lastUpdate) {
+            position.lastUpdate = new Date(position.lastUpdate);
+          }
+          this.positions.set(id, position);
+        });
+        
+        console.log(`📥 Loaded ${positionsArray.length} positions from localStorage`);
+      }
+    } catch (error) {
+      console.error('❌ Error loading positions from localStorage:', error);
     }
   }
 
@@ -87,6 +141,12 @@ export class LivePnLTrackingService {
       const position = this.positions.get(tradeId)!;
       this.positions.delete(tradeId);
       console.log(`📉 Removed position from P&L tracking: ${position.symbol}`);
+      console.log(`📊 Remaining positions being tracked: ${this.positions.size}`);
+      
+      // Update localStorage
+      this.savePositionsToStorage();
+    } else {
+      console.warn(`⚠️ Attempted to remove position ${tradeId} that doesn't exist in tracking`);
     }
   }
 

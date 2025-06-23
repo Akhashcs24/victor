@@ -28,6 +28,7 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
       try {
         // Get today's trades that are BUY orders and completed (active positions)
         const todayTrades = await PersistentTradeLogService.getTodayTradeLogs();
+        console.log(`🔍 ActiveTradesTable: Found ${todayTrades.length} total trades today`);
         
         // More robust filtering for active trades
         const activeBuyTrades = todayTrades.filter(trade => {
@@ -35,6 +36,8 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
           if (trade.action !== 'BUY' || trade.status !== 'COMPLETED') {
             return false;
           }
+          
+          console.log(`🔍 Checking BUY trade: ${trade.symbol} at ${trade.price} (ID: ${trade.id})`);
           
           // Check if there's a corresponding SELL trade for the same symbol
           // that happened AFTER this BUY trade and has the same or more quantity
@@ -45,18 +48,25 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
             sellTrade.status === 'COMPLETED'
           );
           
+          console.log(`🔍 Found ${correspondingSellTrades.length} corresponding SELL trades for ${trade.symbol}`);
+          
           // Calculate total sold quantity for this symbol after this buy
           const totalSoldQuantity = correspondingSellTrades.reduce((sum, sellTrade) => sum + sellTrade.quantity, 0);
           
           // This position is still active if sold quantity is less than bought quantity
-          return totalSoldQuantity < trade.quantity;
+          const isActive = totalSoldQuantity < trade.quantity;
+          console.log(`🔍 Trade ${trade.symbol}: bought=${trade.quantity}, sold=${totalSoldQuantity}, active=${isActive}`);
+          
+          return isActive;
         });
         
+        console.log(`🔍 ActiveTradesTable: Filtered to ${activeBuyTrades.length} active trades`);
         setActiveTrades(activeBuyTrades);
         
         // Get live positions - don't clear if fetch fails
         try {
           const positions = LivePnLTrackingService.getAllPositions();
+          console.log(`🔍 ActiveTradesTable: Found ${positions.length} live positions`);
           setLivePositions(positions);
         } catch (positionError) {
           console.warn('Could not update live positions:', positionError);
@@ -408,6 +418,18 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
                 className="ml-2 px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200"
               >
                 Reload Positions
+              </button>
+              <button 
+                onClick={async () => {
+                  const todayTrades = await PersistentTradeLogService.getTodayTradeLogs();
+                  console.log('🔍 All Today Trades:', todayTrades);
+                  console.log('🔍 BUY Trades:', todayTrades.filter(t => t.action === 'BUY'));
+                  console.log('🔍 SELL Trades:', todayTrades.filter(t => t.action === 'SELL'));
+                  console.log('🔍 Active Trades Logic Result:', activeTrades);
+                }}
+                className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs hover:bg-yellow-200"
+              >
+                Debug Trades
               </button>
             </div>
           </details>
