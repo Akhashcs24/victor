@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { LivePnLTrackingService, LivePosition } from '../services/livePnLTrackingService';
 import { PersistentTradeLogService } from '../services/persistentTradeLogService';
+import { MultiSymbolMonitoringService } from '../services/multiSymbolMonitoringService';
 import { TradeLogEntry } from '../types';
 
 interface ActiveTradesTableProps {
@@ -99,7 +100,7 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
     };
 
     updateData(); // Initial update
-    const interval = setInterval(updateData, 5000); // Reduced frequency to 5 seconds to reduce API load
+    const interval = setInterval(updateData, 2000); // Update every 2 seconds for real-time tracking
 
     return () => clearInterval(interval);
   }, [activeTrades.length, livePositions.length]); // Add dependencies to prevent unnecessary updates
@@ -453,7 +454,7 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
           </div>
         </div>
         <div className="text-xs text-slate-500">
-          Updates every 5 seconds • Live P&L tracking
+          Updates every 2 seconds • Live P&L tracking
         </div>
       </div>
 
@@ -461,42 +462,57 @@ export const ActiveTradesTable: React.FC<ActiveTradesTableProps> = ({ onUpdate }
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-4 pt-4 border-t border-slate-200">
           <details className="text-xs text-slate-500">
-            <summary className="cursor-pointer hover:text-slate-700">Debug Info</summary>
-            <div className="mt-2 space-y-1 font-mono">
-              <div>Active Trades: {activeTrades.length}</div>
-              <div>Live Positions: {livePositions.length}</div>
-              <div>P&L Tracking: {LivePnLTrackingService.isCurrentlyTracking() ? 'Active' : 'Inactive'}</div>
-              <div>Position Count: {LivePnLTrackingService.getPositionCount()}</div>
-              <button 
-                onClick={() => {
-                  console.log('🔍 Debug Info:', LivePnLTrackingService.getDebugInfo());
-                  console.log('🔍 Active Trades:', activeTrades);
-                  console.log('🔍 Live Positions:', livePositions);
-                }}
-                className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200"
-              >
-                Log Debug Info
-              </button>
-              <button 
-                onClick={async () => {
-                  await LivePnLTrackingService.debugReloadPositions();
-                }}
-                className="ml-2 px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200"
-              >
-                Reload Positions
-              </button>
-              <button 
-                onClick={async () => {
-                  const todayTrades = await PersistentTradeLogService.getTodayTradeLogs();
-                  console.log('🔍 All Today Trades:', todayTrades);
-                  console.log('🔍 BUY Trades:', todayTrades.filter(t => t.action === 'BUY'));
-                  console.log('🔍 SELL Trades:', todayTrades.filter(t => t.action === 'SELL'));
-                  console.log('🔍 Active Trades Logic Result:', activeTrades);
-                }}
-                className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs hover:bg-yellow-200"
-              >
-                Debug Trades
-              </button>
+            <summary className="cursor-pointer hover:text-slate-700">Debug Info & Controls</summary>
+            <div className="mt-2 space-y-2">
+              <div className="space-y-1 font-mono text-xs">
+                <div>Active Trades: {activeTrades.length}</div>
+                <div>Live Positions: {livePositions.length}</div>
+                <div>P&L Tracking: {LivePnLTrackingService.isCurrentlyTracking() ? 'Active' : 'Inactive'}</div>
+                <div>Monitoring: {MultiSymbolMonitoringService.isCurrentlyMonitoring() ? 'Active' : 'Inactive'}</div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={async () => {
+                    console.log('🔄 FORCE RESTART: P&L Tracking Service...');
+                    await LivePnLTrackingService.forceRestart();
+                    alert('P&L Tracking Service restarted!');
+                  }}
+                  className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs rounded"
+                >
+                  Restart P&L Tracking
+                </button>
+                <button
+                  onClick={async () => {
+                    console.log('🔄 FORCE REFRESH: Monitoring Service...');
+                    await MultiSymbolMonitoringService.forceRefresh();
+                    alert('Monitoring Service refreshed!');
+                  }}
+                  className="px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 text-xs rounded"
+                >
+                  Refresh Monitoring
+                </button>
+                <button
+                  onClick={async () => {
+                    console.log('🔄 RELOAD: Positions from Trade Logs...');
+                    await reloadPositions();
+                    alert('Positions reloaded!');
+                  }}
+                  className="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xs rounded"
+                >
+                  Reload Positions
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('📊 DEBUG INFO:');
+                    console.log('P&L Service:', LivePnLTrackingService.getDebugInfo());
+                    console.log('Monitoring Service:', MultiSymbolMonitoringService.getDebugStatus());
+                    alert('Debug info logged to console!');
+                  }}
+                  className="px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs rounded"
+                >
+                  Log Debug Info
+                </button>
+              </div>
             </div>
           </details>
         </div>

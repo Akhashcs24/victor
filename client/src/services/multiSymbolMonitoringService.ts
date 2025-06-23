@@ -895,4 +895,47 @@ export class MultiSymbolMonitoringService {
   static isCurrentlyMonitoring(): boolean {
     return this.isMonitoring;
   }
+
+  /**
+   * Debug method to get current monitoring status
+   */
+  static getDebugStatus(): {
+    isMonitoring: boolean;
+    symbolCount: number;
+    symbols: MonitorEntry[];
+    monitoringInterval: number;
+    lastApiCall: number;
+    apiCallCount: number;
+  } {
+    return {
+      isMonitoring: this.isMonitoring,
+      symbolCount: this.monitoredSymbols.length,
+      symbols: [...this.monitoredSymbols],
+      monitoringInterval: this.MONITORING_INTERVAL,
+      lastApiCall: this.lastApiCallTime,
+      apiCallCount: this.apiCallCount
+    };
+  }
+
+  /**
+   * Force refresh monitoring service - restart if needed
+   */
+  static async forceRefresh(): Promise<void> {
+    console.log('🔄 FORCE REFRESH: Restarting monitoring service...');
+    
+    const wasMonitoring = this.isMonitoring;
+    const symbolCount = this.monitoredSymbols.length;
+    
+    if (wasMonitoring) {
+      this.stopMonitoring();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    if (symbolCount > 0) {
+      this.startMonitoring();
+      console.log(`✅ FORCE REFRESH: Monitoring restarted with ${symbolCount} symbols`);
+    } else {
+      console.log('⚠️ FORCE REFRESH: No symbols to monitor');
+    }
+  }
 } 

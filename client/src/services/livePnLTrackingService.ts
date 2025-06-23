@@ -17,7 +17,7 @@ export class LivePnLTrackingService {
   private static positions: Map<string, LivePosition> = new Map();
   private static isTracking: boolean = false;
   private static trackingInterval: NodeJS.Timeout | null = null;
-  private static readonly UPDATE_INTERVAL = 5000; // 5 seconds
+  private static readonly UPDATE_INTERVAL = 2000; // 2 seconds for real-time tracking
 
   /**
    * Start tracking P&L for all open positions
@@ -396,5 +396,26 @@ export class LivePnLTrackingService {
     this.positions.clear();
     await this.loadPositionsFromTradeLogs();
     console.log('🔄 Debug: Reloaded positions:', this.getDebugInfo());
+  }
+
+  /**
+   * Force restart the tracking service with fresh data
+   */
+  static async forceRestart(): Promise<void> {
+    console.log('🔄 FORCE RESTART: Stopping and restarting P&L tracking...');
+    
+    // Stop current tracking
+    this.stopTracking();
+    
+    // Clear positions
+    this.positions.clear();
+    
+    // Wait a moment
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Restart tracking
+    await this.startTracking();
+    
+    console.log(`✅ FORCE RESTART: P&L tracking restarted with ${this.positions.size} positions`);
   }
 } 
